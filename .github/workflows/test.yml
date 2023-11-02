@@ -1,0 +1,68 @@
+name: test
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '.github/**'
+      - '**.md'
+
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - '.github/**'
+      - '**.md'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  Ubuntu-Make:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+        platform: [x64, x86]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: ./build-linux
+
+      - name: Make
+        run: make CONFIG=${{matrix.configuration}} PLATFORM=${{matrix.platform}}
+
+      - name: Run
+        run: ./bin/${{matrix.configuration}}-${{matrix.platform}}/tests/test_cplatform/test_cplatform
+
+  Windows-MSBuild:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+        platform: [x64, x86]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: .\build-win-x64.exe
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Restore NuGet packages
+        run: nuget restore .
+
+      - name: MSBuild
+        run: msbuild /m /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} .
+
+      - name: Run
+        run: .\bin\${{matrix.configuration}}-${{matrix.platform}}\tests\test_cplatform\test_cplatform.exe
