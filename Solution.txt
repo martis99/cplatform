@@ -1,0 +1,7 @@
+NAME: cplatform
+LANGS: C
+DIRS: cplatform, test
+STARTUP: test_cplatform
+CONFIGS: Debug, Release
+PLATFORMS: x64, x86
+CFLAGS: STD_C99

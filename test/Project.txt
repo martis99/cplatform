@@ -1,0 +1,5 @@
+NAME: test_cplatform
+TYPE: EXE
+SOURCE: src
+DEPENDS: cplatform
+INCLUDES: cplatform
