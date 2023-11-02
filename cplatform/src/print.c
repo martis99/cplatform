@@ -263,7 +263,11 @@ int c_setmode(FILE *file, int mode)
 
 int c_setmodew(FILE *file)
 {
+#if defined(C_WIN)
 	return c_setmode(file, _O_WTEXT);
+#else
+	return 0;
+#endif
 }
 
 int c_printv_cb(void *buf, size_t size, int off, const char *fmt, va_list args)
