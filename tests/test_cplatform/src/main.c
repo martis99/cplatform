@@ -95,6 +95,9 @@ int main(int argc, char **argv)
 
 	log_info("test_cplatform", "main", NULL, "print start");
 
+	c_fflush(stdout);
+	c_fflush(stderr);
+
 	const int rh  = 5;
 	const int rc  = 6;
 	const int hrc = (rc - 6) / 2;
