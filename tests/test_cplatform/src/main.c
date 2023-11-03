@@ -59,7 +59,7 @@ static void line(int rh, int rc)
 		c_printf("-");
 	}
 
-	for (int j = 0; j < 3; j++) {
+	for (int j = 0; j < 2; j++) {
 		c_printf("+");
 
 		for (int i = 0; i < rc + 2; i++) {
@@ -82,7 +82,11 @@ int main(int argc, char **argv)
 
 	log_set_level(LOG_TRACE);
 
-	c_print_init();
+	//c_print_init();
+
+	SetConsoleOutputCP(CP_UTF8);
+	const wchar_t unicodeString[] = L"├─\n";
+	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), unicodeString, wcslen(unicodeString), NULL, NULL);
 
 	log_trace("test_cplatform", "main", NULL, "trace");
 	log_debug("test_cplatform", "main", NULL, "debug");
@@ -93,38 +97,61 @@ int main(int argc, char **argv)
 
 	c_printf("\n");
 
-	log_info("test_cplatform", "main", NULL, "print start");
-
 	c_fflush(stdout);
 	c_fflush(stderr);
 
-	const int rh  = 5;
+	log_info("test_cplatform", "main", NULL, "print start");
+
+	c_fflush(stderr);
+
+	const int rh  = 6;
 	const int rc  = 6;
 	const int hrc = (rc - 6) / 2;
 
 	c_printf("\n");
 
-	c_printf("%*s | %-*s | %-*s | %-*s\n", rh, "", rc, "print", rc, "stdout", rc, "stderr");
+	c_printf("%*s | %-*s | %-*s\n", rh, "", rc, "char", rc, "wchar");
 
 	line(rh, rc);
 
-	{
-		c_printf("%*s | %*s", rh, "char", hrc, "");
-		EXPECT(c_v(c_printf_cb, 0, 0, NULL), 2);
-		EXPECT(c_vr(c_printf_cb, 0, 0, NULL), 2);
-		EXPECT(c_ur(c_printf_cb, 0, 0, NULL), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_v(c_fprintf_cb, 0, 0, stdout), 2);
-		EXPECT(c_vr(c_fprintf_cb, 0, 0, stdout), 2);
-		EXPECT(c_ur(c_fprintf_cb, 0, 0, stdout), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		c_fflush(stdout);
-		EXPECT(c_v(c_fprintf_cb, 0, 0, stderr), 2);
-		EXPECT(c_vr(c_fprintf_cb, 0, 0, stderr), 2);
-		EXPECT(c_ur(c_fprintf_cb, 0, 0, stderr), 2);
-		c_fflush(stderr);
-		c_printf("\n");
+	c_printf("%*s | %*s", rh, "print", hrc, "");
+	EXPECT(c_v(c_printf_cb, 0, 0, NULL), 2);
+	EXPECT(c_vr(c_printf_cb, 0, 0, NULL), 2);
+	EXPECT(c_ur(c_printf_cb, 0, 0, NULL), 2);
+	c_printf("%*s | %*s", hrc, "", hrc, "");
+	EXPECT(c_wprintf_cb(NULL, 0, 0, V), 2);
+	EXPECT(c_wprintf_cb(NULL, 0, 0, VR), 2);
+	EXPECT(c_wprintf_cb(NULL, 0, 0, UR), 2);
+	c_printf("\n");
+	c_fflush(stdout);
 
+	line(rh, rc);
+
+	c_printf("%*s | %*s", rh, "stdout", hrc, "");
+	EXPECT(c_v(c_fprintf_cb, 0, 0, stdout), 2);
+	EXPECT(c_vr(c_fprintf_cb, 0, 0, stdout), 2);
+	EXPECT(c_ur(c_fprintf_cb, 0, 0, stdout), 2);
+	c_printf("%*s | %*s", hrc, "", hrc, "");
+	EXPECT(c_fwprintf_cb(stdout, 0, 0, V), 2);
+	EXPECT(c_fwprintf_cb(stdout, 0, 0, VR), 2);
+	EXPECT(c_fwprintf_cb(stdout, 0, 0, UR), 2);
+	c_printf("\n");
+	c_fflush(stdout);
+
+	line(rh, rc);
+
+	c_printf("%*s | %*s", rh, "stderr", hrc, "");
+	EXPECT(c_v(c_fprintf_cb, 0, 0, stderr), 2);
+	EXPECT(c_vr(c_fprintf_cb, 0, 0, stderr), 2);
+	EXPECT(c_ur(c_fprintf_cb, 0, 0, stderr), 2);
+	c_printf("%*s | %*s", hrc, "", hrc, "");
+	EXPECT(c_fwprintf_cb(stderr, 0, 0, V), 2);
+	EXPECT(c_fwprintf_cb(stderr, 0, 0, VR), 2);
+	EXPECT(c_fwprintf_cb(stderr, 0, 0, UR), 2);
+	c_fflush(stderr);
+	c_printf("\n");
+
+	{
 		const char exp[] = "\xB3 \r\n\xC3\xC4\r\n\xC0\xC4\r\n";
 
 		const char *path = "char.txt";
@@ -168,25 +195,7 @@ int main(int argc, char **argv)
 		EXPECT_STR(buf, exp);
 	}
 
-	line(rh, rc);
-
 	{
-		c_printf("%*s | %*s", rh, "wchar", hrc, "");
-		EXPECT(c_wprintf_cb(NULL, 0, 0, V), 2);
-		EXPECT(c_wprintf_cb(NULL, 0, 0, VR), 2);
-		EXPECT(c_wprintf_cb(NULL, 0, 0, UR), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_fwprintf_cb(stdout, 0, 0, V), 2);
-		EXPECT(c_fwprintf_cb(stdout, 0, 0, VR), 2);
-		EXPECT(c_fwprintf_cb(stdout, 0, 0, UR), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		c_fflush(stdout);
-		EXPECT(c_fwprintf_cb(stderr, 0, 0, V), 2);
-		EXPECT(c_fwprintf_cb(stderr, 0, 0, VR), 2);
-		EXPECT(c_fwprintf_cb(stderr, 0, 0, UR), 2);
-		c_fflush(stderr);
-		c_printf("\n");
-
 		const wchar exp[] = V L"\r\n" VR L"\r\n" UR L"\r\n";
 
 		const char *path = "wchar.txt";
