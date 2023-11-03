@@ -62,7 +62,7 @@ jobs:
         run: nuget restore .
 
       - name: MSBuild
-        run: msbuild /m /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} .
+        run: msbuild /m /p:Configuration=${{matrix.configuration}} /p:Platform=${{matrix.platform}} /p:ConsoleEncoding=UTF8 .
 
       - name: Run
         run: .\bin\${{matrix.configuration}}-${{matrix.platform}}\tests\test_cplatform\test_cplatform.exe
