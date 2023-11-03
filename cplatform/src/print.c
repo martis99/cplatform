@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <stdio.h>
 #include <wchar.h>
 
@@ -31,9 +32,16 @@ static FILE *file_reopen(const char *path, const char *mode, FILE *file)
 #endif
 	if (file == NULL) {
 		int errnum = errno;
-		log_error("cutils", "file", NULL, "failed to reopen file \"%s\": %s (%d)", path, log_strerror(errnum), errnum);
+		log_error("cplatform", "file", NULL, "failed to reopen file \"%s\": %s (%d)", path, log_strerror(errnum), errnum);
 	}
 	return file;
+}
+
+int c_print_init()
+{
+	const char *locale = setlocale(LC_CTYPE, "en_US.UTF-8");
+	log_debug("cplatform", "print", NULL, "locale set to %s", locale);
+	return 0;
 }
 
 int c_printv(const char *fmt, va_list args)
@@ -76,11 +84,11 @@ int c_fprintv(FILE *file, const char *fmt, va_list args)
 #if defined(C_WIN)
 	ret = vfprintf_s(file, fmt, copy);
 #else
-	ret  = vfprintf(file, fmt, copy);
+	ret = vfprintf(file, fmt, copy);
 #endif
 	if (ret < 0) {
 		int errnum = errno;
-		log_error("cutils", "print", NULL, "failed to write to file: %s (%d)", log_strerror(errnum), errnum);
+		log_error("cplatform", "print", NULL, "failed to write to file: %s (%d)", log_strerror(errnum), errnum);
 		ret = 0;
 	}
 	va_end(copy);
@@ -110,7 +118,7 @@ int c_sprintv(char *buf, size_t size, int off, const char *fmt, va_list args)
 #if defined(C_WIN)
 	ret = vsnprintf_s(buf, size / sizeof(char) - off, size / sizeof(char) - off, fmt, copy);
 #else
-	ret  = vsnprintf(buf, size / sizeof(char) - off, fmt, copy);
+	ret = vsnprintf(buf, size / sizeof(char) - off, fmt, copy);
 #endif
 	va_end(copy);
 
@@ -178,12 +186,11 @@ int c_fwprintv(FILE *file, const wchar *fmt, va_list args)
 	ret	 = vfwprintf_s(file, fmt, copy);
 	c_setmode(file, mode);
 #else
-	ret  = vfwprintf(file, fmt, copy);
+	ret = vfwprintf(file, fmt, copy);
 #endif
-	if (ret < 0) {
-		int errnum = errno;
-		log_error("cutils", "print", NULL, "failed to write to file: %s (%d)", log_strerror(errnum), errnum);
-		ret = 0;
+	if (ret < 0 && errno == 0) {
+		file_reopen(NULL, "w", file);
+		ret = vfwprintf(file, fmt, copy);
 	}
 	va_end(copy);
 	return ret;
@@ -212,7 +219,7 @@ int c_swprintv(wchar *buf, size_t size, int off, const wchar *fmt, va_list args)
 #if defined(C_WIN)
 	ret = vswprintf_s(buf, size / sizeof(wchar) - off, fmt, copy);
 #else
-	ret  = vswprintf(buf, size / sizeof(wchar) - off, fmt, copy);
+	ret = vswprintf(buf, size / sizeof(wchar) - off, fmt, copy);
 #endif
 	va_end(copy);
 	return ret;
@@ -252,10 +259,10 @@ int c_setmode(FILE *file, int mode)
 	ret = _setmode(_fileno(file), mode);
 	if (ret < 0) {
 		int errnum = errno;
-		log_error("cutils", "print", NULL, "failed to set mode to: %d: %s (%d)", mode, log_strerror(errnum), errnum);
+		log_error("cplatform", "print", NULL, "failed to set mode to: %d: %s (%d)", mode, log_strerror(errnum), errnum);
 	}
 #else
-	ret  = mode;
+	ret = mode;
 #endif
 
 	return ret;
@@ -266,6 +273,7 @@ int c_setmodew(FILE *file)
 #if defined(C_WIN)
 	return c_setmode(file, _O_WTEXT);
 #else
+	fflush(file);
 	return 0;
 #endif
 }

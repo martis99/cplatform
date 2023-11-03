@@ -1,8 +1,7 @@
 ﻿#include "log.h"
 #include "platform.h"
 
-#include <errno.h>
-#include <stdio.h>
+#include <string.h>
 
 #define V  L"\u2502 "
 #define VR L"\u251C\u2500"
@@ -44,7 +43,8 @@ size_t file_read(FILE *file, size_t size, void *data, size_t data_size)
 #if defined(C_WIN)
 	cnt = fread_s(data, data_size, size, 1, file);
 #else
-	cnt  = fread(data, size, 1, file);
+	(void)data_size;
+	cnt = fread(data, size, 1, file);
 #endif
 	if (cnt != 1) {
 		return 0;
@@ -82,6 +82,8 @@ int main(int argc, char **argv)
 
 	log_set_level(LOG_TRACE);
 
+	c_print_init();
+
 	log_trace("test_cplatform", "main", NULL, "trace");
 	log_debug("test_cplatform", "main", NULL, "debug");
 	log_info("test_cplatform", "main", NULL, "info");
@@ -95,7 +97,7 @@ int main(int argc, char **argv)
 
 	const int rh  = 5;
 	const int rc  = 6;
-	const int hrc = (rc - 2) / 2;
+	const int hrc = (rc - 6) / 2;
 
 	c_printf("\n");
 
@@ -104,28 +106,20 @@ int main(int argc, char **argv)
 	line(rh, rc);
 
 	{
-		c_printf("%*s | %*s", rh, "", hrc, "");
-		EXPECT(c_v(c_printf_cb, 0, 0, NULL), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_v(c_fprintf_cb, 0, 0, stdout), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_v(c_fprintf_cb, 0, 0, stderr), 2);
-		c_printf("\n");
-
 		c_printf("%*s | %*s", rh, "char", hrc, "");
+		EXPECT(c_v(c_printf_cb, 0, 0, NULL), 2);
 		EXPECT(c_vr(c_printf_cb, 0, 0, NULL), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_vr(c_fprintf_cb, 0, 0, stdout), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_vr(c_fprintf_cb, 0, 0, stderr), 2);
-		c_printf("\n");
-
-		c_printf("%*s | %*s", rh, "", hrc, "");
 		EXPECT(c_ur(c_printf_cb, 0, 0, NULL), 2);
 		c_printf("%*s | %*s", hrc, "", hrc, "");
+		EXPECT(c_v(c_fprintf_cb, 0, 0, stdout), 2);
+		EXPECT(c_vr(c_fprintf_cb, 0, 0, stdout), 2);
 		EXPECT(c_ur(c_fprintf_cb, 0, 0, stdout), 2);
 		c_printf("%*s | %*s", hrc, "", hrc, "");
+		c_fflush(stdout);
+		EXPECT(c_v(c_fprintf_cb, 0, 0, stderr), 2);
+		EXPECT(c_vr(c_fprintf_cb, 0, 0, stderr), 2);
 		EXPECT(c_ur(c_fprintf_cb, 0, 0, stderr), 2);
+		c_fflush(stderr);
 		c_printf("\n");
 
 		const char exp[] = "\xB3 \r\n\xC3\xC4\r\n\xC0\xC4\r\n";
@@ -174,28 +168,20 @@ int main(int argc, char **argv)
 	line(rh, rc);
 
 	{
-		c_printf("%*s | %*s", rh, "", hrc, "");
-		EXPECT(c_wprintf_cb(NULL, 0, 0, V), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_fwprintf_cb(stdout, 0, 0, V), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_fwprintf_cb(stderr, 0, 0, V), 2);
-		c_printf("\n");
-
 		c_printf("%*s | %*s", rh, "wchar", hrc, "");
+		EXPECT(c_wprintf_cb(NULL, 0, 0, V), 2);
 		EXPECT(c_wprintf_cb(NULL, 0, 0, VR), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_fwprintf_cb(stdout, 0, 0, VR), 2);
-		c_printf("%*s | %*s", hrc, "", hrc, "");
-		EXPECT(c_fwprintf_cb(stderr, 0, 0, VR), 2);
-		c_printf("\n");
-
-		c_printf("%*s | %*s", rh, "", hrc, "");
 		EXPECT(c_wprintf_cb(NULL, 0, 0, UR), 2);
 		c_printf("%*s | %*s", hrc, "", hrc, "");
+		EXPECT(c_fwprintf_cb(stdout, 0, 0, V), 2);
+		EXPECT(c_fwprintf_cb(stdout, 0, 0, VR), 2);
 		EXPECT(c_fwprintf_cb(stdout, 0, 0, UR), 2);
 		c_printf("%*s | %*s", hrc, "", hrc, "");
+		c_fflush(stdout);
+		EXPECT(c_fwprintf_cb(stderr, 0, 0, V), 2);
+		EXPECT(c_fwprintf_cb(stderr, 0, 0, VR), 2);
 		EXPECT(c_fwprintf_cb(stderr, 0, 0, UR), 2);
+		c_fflush(stderr);
 		c_printf("\n");
 
 		const wchar exp[] = V L"\r\n" VR L"\r\n" UR L"\r\n";
