@@ -39,7 +39,7 @@ static FILE *file_reopen(const char *path, const char *mode, FILE *file)
 
 int c_print_init()
 {
-	const char *locale = setlocale(LC_CTYPE, "en_US.UTF-8");
+	const char *locale = setlocale(LC_ALL, "en_US.UTF-8");
 	log_debug("cplatform", "print", NULL, "locale set to %s", locale);
 	return 0;
 }

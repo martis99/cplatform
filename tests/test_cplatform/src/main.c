@@ -82,11 +82,11 @@ int main(int argc, char **argv)
 
 	log_set_level(LOG_TRACE);
 
-	//c_print_init();
-
 	SetConsoleOutputCP(CP_UTF8);
 	const wchar_t unicodeString[] = L"├─\n";
 	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), unicodeString, wcslen(unicodeString), NULL, NULL);
+
+	c_print_init();
 
 	log_trace("test_cplatform", "main", NULL, "trace");
 	log_debug("test_cplatform", "main", NULL, "debug");
