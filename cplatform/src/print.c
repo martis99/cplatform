@@ -372,29 +372,56 @@ int c_fwprintf_cb(void *priv, size_t size, int off, const wchar *fmt, ...)
 	return len;
 }
 
-int c_v(c_printf_fn cb, size_t size, int off, void *priv)
+int c_v(c_printf_fn cb, size_t size, int off, void *stream)
 {
 	if (cb == NULL) {
 		return 0;
 	}
 
-	return cb(priv, size, off, "│ ");
+	return cb(stream, size, off, "│ ");
 }
 
-int c_vr(c_printf_fn cb, size_t size, int off, void *priv)
+int c_vr(c_printf_fn cb, size_t size, int off, void *stream)
 {
 	if (cb == NULL) {
 		return 0;
 	}
 
-	return cb(priv, size, off, "├─");
+	return cb(stream, size, off, "├─");
 }
 
-int c_ur(c_printf_fn cb, size_t size, int off, void *priv)
+int c_ur(c_printf_fn cb, size_t size, int off, void *stream)
 {
 	if (cb == NULL) {
 		return 0;
 	}
 
-	return cb(priv, size, off, "└─");
+	return cb(stream, size, off, "└─");
+}
+
+int c_wv(c_wprintf_fn cb, size_t size, int off, void *stream)
+{
+	if (cb == NULL) {
+		return 0;
+	}
+
+	return cb(stream, size, off, L"\u2502 ");
+}
+
+int c_wvr(c_wprintf_fn cb, size_t size, int off, void *stream)
+{
+	if (cb == NULL) {
+		return 0;
+	}
+
+	return cb(stream, size, off, L"\u251C\u2500");
+}
+
+int c_wur(c_wprintf_fn cb, size_t size, int off, void *stream)
+{
+	if (cb == NULL) {
+		return 0;
+	}
+
+	return cb(stream, size, off, L"\u2514\u2500");
 }

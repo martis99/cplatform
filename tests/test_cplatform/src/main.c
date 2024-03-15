@@ -4,10 +4,6 @@
 #include <errno.h>
 #include <string.h>
 
-#define V  L"\u2502 "
-#define VR L"\u251C\u2500"
-#define UR L"\u2514\u2500"
-
 #define EXPECT(_actual, _expected)                                                                   \
 	if ((_actual) != (_expected)) {                                                              \
 		log_error("cplatform", "test", NULL, "%s = %d != %d", #_actual, _actual, _expected); \
@@ -159,9 +155,9 @@ int main(int argc, char **argv)
 	EXPECT(c_vr(c_printf_cb, 0, 0, NULL), 6);
 	EXPECT(c_ur(c_printf_cb, 0, 0, NULL), 6);
 	c_printf("%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wprintf_cb(NULL, 0, 0, V), 2);
-	EXPECT(c_wprintf_cb(NULL, 0, 0, VR), 2);
-	EXPECT(c_wprintf_cb(NULL, 0, 0, UR), 2);
+	EXPECT(c_wv(c_wprintf_cb, 0, 0, NULL), 2);
+	EXPECT(c_wvr(c_wprintf_cb, 0, 0, NULL), 2);
+	EXPECT(c_wur(c_wprintf_cb, 0, 0, NULL), 2);
 	c_printf("\n");
 	c_fflush(stdout);
 
@@ -172,9 +168,9 @@ int main(int argc, char **argv)
 	EXPECT(c_vr(c_fprintf_cb, 0, 0, stdout), 6);
 	EXPECT(c_ur(c_fprintf_cb, 0, 0, stdout), 6);
 	c_printf("%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_fwprintf_cb(stdout, 0, 0, V), 2);
-	EXPECT(c_fwprintf_cb(stdout, 0, 0, VR), 2);
-	EXPECT(c_fwprintf_cb(stdout, 0, 0, UR), 2);
+	EXPECT(c_wv(c_fwprintf_cb, 0, 0, stdout), 2);
+	EXPECT(c_wvr(c_fwprintf_cb, 0, 0, stdout), 2);
+	EXPECT(c_wur(c_fwprintf_cb, 0, 0, stdout), 2);
 	c_printf("\n");
 
 	line(rh, rc);
@@ -185,9 +181,9 @@ int main(int argc, char **argv)
 	EXPECT(c_vr(c_fprintf_cb, 0, 0, stderr), 6);
 	EXPECT(c_ur(c_fprintf_cb, 0, 0, stderr), 6);
 	c_fprintf(stderr, "%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_fwprintf_cb(stderr, 0, 0, V), 2);
-	EXPECT(c_fwprintf_cb(stderr, 0, 0, VR), 2);
-	EXPECT(c_fwprintf_cb(stderr, 0, 0, UR), 2);
+	EXPECT(c_wv(c_fwprintf_cb, 0, 0, stderr), 2);
+	EXPECT(c_wvr(c_fwprintf_cb, 0, 0, stderr), 2);
+	EXPECT(c_wur(c_fwprintf_cb, 0, 0, stderr), 2);
 	c_fprintf(stderr, "\n");
 	c_fflush(stderr);
 
@@ -230,17 +226,17 @@ int main(int argc, char **argv)
 	}
 
 	{
-		const wchar exp[] = V L"\r\n" VR L"\r\n" UR L"\r\n";
+		const wchar exp[] = L"\u2502 \r\n\u251C\u2500\r\n\u2514\u2500\r\n";
 
 		const char *path = "wchar.txt";
 
 		FILE *file = file_open(path, "wb+");
 
-		EXPECT(c_fwprintf_cb(file, 0, 0, V), 2);
+		EXPECT(c_wv(c_fwprintf_cb, 0, 0, file), 2);
 		c_fwprintf(file, L"\n");
-		EXPECT(c_fwprintf_cb(file, 0, 0, VR), 2);
+		EXPECT(c_wvr(c_fwprintf_cb, 0, 0, file), 2);
 		c_fwprintf(file, L"\n");
-		EXPECT(c_fwprintf_cb(file, 0, 0, UR), 2);
+		EXPECT(c_wur(c_fwprintf_cb, 0, 0, file), 2);
 		c_fwprintf(file, L"\n");
 
 		fclose(file);
@@ -248,19 +244,19 @@ int main(int argc, char **argv)
 		file = file_open(path, "rb+");
 		wchar data[64] = { 0 };
 		file_read(file, sizeof(exp), data, sizeof(data));
-		//EXPECT_WSTR(data, exp); //TODO
+		//EXPECT_WSTR(data, exp); //TODO: read wchar from file
 		fclose(file);
 		file_delete(path);
 
 		wchar buf[64] = { 0 };
 		int off = 0;
-		EXPECT(c_swprintf_cb(buf, sizeof(buf), off, V), 2);
+		EXPECT(c_wv(c_swprintf_cb, sizeof(buf), off, buf), 2);
 		off += 2;
 		off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-		EXPECT(c_swprintf_cb(buf, sizeof(buf), off, VR), 2);
+		EXPECT(c_wvr(c_swprintf_cb, sizeof(buf), off, buf), 2);
 		off += 2;
 		off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-		EXPECT(c_swprintf_cb(buf, sizeof(buf), off, UR), 2);
+		EXPECT(c_wur(c_swprintf_cb, sizeof(buf), off, buf), 2);
 		off += 2;
 		off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
 
