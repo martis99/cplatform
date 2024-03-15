@@ -109,15 +109,14 @@ int c_sprintv(char *buf, size_t size, int off, const char *fmt, va_list args)
 	int ret;
 #if defined(C_WIN)
 	ret = vsnprintf_s(buf, size / sizeof(char) - off, size / sizeof(char) - off, fmt, copy);
+	va_end(copy);
 #else
 	ret = vsnprintf(buf, size / sizeof(char) - off, fmt, copy);
-#endif
 	va_end(copy);
-
 	if (size > 0 && (size_t)ret > size) {
 		return 0;
 	}
-
+#endif
 	return ret;
 }
 
@@ -210,15 +209,15 @@ int c_swprintv(wchar *buf, size_t size, int off, const wchar *fmt, va_list args)
 	int ret;
 #if defined(C_WIN)
 	ret = vswprintf_s(buf, size / sizeof(wchar) - off, fmt, copy);
+	va_end(copy);
 #else
 	ret = vswprintf(buf, size / sizeof(wchar) - off, fmt, copy);
-#endif
 	va_end(copy);
 
 	if (size > 0 && (size_t)ret > size) {
 		return 0;
 	}
-
+#endif
 	return ret;
 }
 

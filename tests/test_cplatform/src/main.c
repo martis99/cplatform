@@ -167,9 +167,6 @@ static int t_print()
 {
 	int ret = 0;
 
-	char cbuf[2]  = { 0 };
-	wchar wbuf[2] = { 0 };
-
 	EXPECT(c_printv(NULL, NULL), 0);
 	EXPECT(c_fprintv(NULL, NULL, NULL), 0);
 	const char *temp = "temp.txt";
@@ -182,11 +179,17 @@ static int t_print()
 	file_delete(temp);
 
 	EXPECT(c_sprintv(NULL, 0, 0, NULL, NULL), 0);
+#ifdef C_LINUX
+	char cbuf[2] = { 0 };
 	EXPECT(c_sprintf(cbuf, sizeof(cbuf), 0, "abc"), 0);
+#endif
 	EXPECT(c_wprintv(NULL, NULL), 0);
 	EXPECT(c_fwprintv(NULL, NULL, NULL), 0);
 	EXPECT(c_swprintv(NULL, 0, 0, NULL, NULL), 0);
+#ifdef C_LINUX
+	wchar wbuf[2] = { 0 };
 	EXPECT(c_swprintf(wbuf, sizeof(wbuf), 0, L"abc"), 0);
+#endif
 	EXPECT(c_setmode(NULL, 0), 0);
 	EXPECT(c_fflush(NULL), 1);
 	EXPECT(c_v(NULL, 0, 0, NULL), 0);
