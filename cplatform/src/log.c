@@ -90,6 +90,14 @@ log_t *log_init(log_t *log)
 	return log;
 }
 
+log_t *log_set(log_t *log)
+{
+	log_t *cur = s_log;
+
+	s_log = log;
+	return cur;
+}
+
 const log_t *log_get()
 {
 	return s_log;

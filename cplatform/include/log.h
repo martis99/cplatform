@@ -53,6 +53,7 @@ enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 #define log_fatal(_pkg, _file, _tag, ...) log_log(LOG_FATAL, _pkg, _file, __func__, __LINE__, _tag, __VA_ARGS__)
 
 log_t *log_init(log_t *log);
+log_t *log_set(log_t *log);
 const log_t *log_get();
 
 const char *log_level_str(int level);

@@ -17,10 +17,6 @@
 
 static FILE *file_reopen(const char *path, const char *mode, FILE *file)
 {
-	if ((path == NULL && file != stdout && file != stderr) || mode == NULL || file == NULL) {
-		return NULL;
-	}
-
 	errno = 0;
 #if defined(C_WIN)
 	if (path == NULL) {
@@ -30,10 +26,6 @@ static FILE *file_reopen(const char *path, const char *mode, FILE *file)
 #else
 	file = freopen(path, mode, file);
 #endif
-	if (file == NULL) {
-		int errnum = errno;
-		log_error("cplatform", "file", NULL, "failed to reopen file \"%s\": %s (%d)", path, log_strerror(errnum), errnum);
-	}
 	return file;
 }
 
@@ -86,8 +78,8 @@ int c_fprintv(FILE *file, const char *fmt, va_list args)
 #else
 	ret = vfprintf(file, fmt, copy);
 #endif
-	if (ret < 0) {
-		int errnum = errno;
+	int errnum = errno;
+	if (ret < 0 && errnum != 0) {
 		log_error("cplatform", "print", NULL, "failed to write to file: %s (%d)", log_strerror(errnum), errnum);
 		ret = 0;
 	}
@@ -222,6 +214,11 @@ int c_swprintv(wchar *buf, size_t size, int off, const wchar *fmt, va_list args)
 	ret = vswprintf(buf, size / sizeof(wchar) - off, fmt, copy);
 #endif
 	va_end(copy);
+
+	if (size > 0 && (size_t)ret > size) {
+		return 0;
+	}
+
 	return ret;
 }
 

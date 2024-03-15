@@ -1,3 +1,4 @@
+#include "c_time.h"
 #include "log.h"
 #include "platform.h"
 
@@ -22,7 +23,7 @@
 		ret = 1;                                                                                             \
 	}
 
-FILE *file_open(const char *path, const char *mode)
+static FILE *file_open(const char *path, const char *mode)
 {
 	FILE *file = NULL;
 #if defined(C_WIN)
@@ -33,29 +34,7 @@ FILE *file_open(const char *path, const char *mode)
 	return file;
 }
 
-FILE *file_reopen(const char *path, const char *mode, FILE *file)
-{
-	if ((path == NULL && file != stdout && file != stderr) || mode == NULL || file == NULL) {
-		return NULL;
-	}
-
-	errno = 0;
-#if defined(C_WIN)
-	if (path == NULL) {
-		return NULL;
-	}
-	freopen_s(&file, path, mode, file);
-#else
-	file = freopen(path, mode, file);
-#endif
-	if (file == NULL) {
-		int errnum = errno;
-		log_error("cutils", "file", NULL, "failed to reopen file \"%s\": %s (%d)", path, log_strerror(errnum), errnum);
-	}
-	return file;
-}
-
-size_t file_read(FILE *file, size_t size, void *data, size_t data_size)
+static size_t file_read(FILE *file, size_t size, void *data, size_t data_size)
 {
 	size_t cnt;
 
@@ -72,23 +51,14 @@ size_t file_read(FILE *file, size_t size, void *data, size_t data_size)
 	return size;
 }
 
-int file_delete(const char *path)
+static int file_delete(const char *path)
 {
-	if (path == NULL) {
-		return 1;
-	}
-
 	int ret;
 #if defined(C_WIN)
 	ret = DeleteFileA(path) == 0 ? 1 : 0;
 #else
 	errno = 0;
 	ret   = remove(path);
-	if (ret != 0) {
-		int errnum = errno;
-		log_error("cutils", "file", NULL, "failed to delete file \"%s\": %s (%d)", path, log_strerror(errnum), errnum);
-		ret = 1;
-	}
 #endif
 	return ret;
 }
@@ -110,41 +80,138 @@ static void line(int rh, int rc)
 	c_printf("\n");
 }
 
-int main(int argc, char **argv)
+static int t_time()
 {
-	(void)argc;
-	(void)argv;
-
 	int ret = 0;
 
-	log_t log = { 0 };
-	log_init(&log);
+	c_time();
+	c_sleep(1);
+	c_time_str(NULL);
 
-	log_set_level(LOG_TRACE);
+	return ret;
+}
 
-	c_print_init();
+static int t_log()
+{
+	int level = log_set_level(LOG_TRACE);
 
-	log_trace("test_cplatform", "main", NULL, "trace");
-	log_debug("test_cplatform", "main", NULL, "debug");
-	log_info("test_cplatform", "main", NULL, "info");
-	log_warn("test_cplatform", "main", NULL, "warn");
-	log_error("test_cplatform", "main", NULL, "error");
-	log_fatal("test_cplatform", "main", NULL, "fatal");
+	log_trace(NULL, NULL, NULL, NULL);
+	log_trace("test_cplatform", "main", "test", "trace");
+	log_debug("test_cplatform", "main", "test", "debug");
+	log_info("test_cplatform", "main", "test", "info");
+	log_warn("test_cplatform", "main", "test", "warn");
+	log_error("test_cplatform", "main", "test", "error");
+	log_fatal("test_cplatform", "main", "test", "fatal");
 
-	c_printf("\n");
+	log_set_level(level);
+
+	return 0;
+}
+
+static int print_callback(log_event_t *ev)
+{
+	(void)ev;
+	return 0;
+}
+
+static int t_log_callback()
+{
+	int ret = 0;
+
+	const log_t *log = log_get();
+
+	log_set(NULL);
+	EXPECT(log_add_callback(print_callback, NULL, LOG_TRACE, 1), 1);
+
+	log_t tmp = *log;
+	log_set(&tmp);
+
+	char buf[1024] = { 0 };
+	log_add_print(c_sprintv_cb, sizeof(buf), 0, buf, LOG_DEBUG, 0);
+	log_add_print(c_sprintv_cb, sizeof(buf), 0, buf, LOG_DEBUG, 1);
+
+	for (int i = 2; i < LOG_MAX_CALLBACKS; i++) {
+		EXPECT(log_add_callback(print_callback, NULL, LOG_TRACE, 1), 0);
+	}
+
+	EXPECT(log_add_callback(print_callback, NULL, LOG_TRACE, 1), 1);
+
+	log_debug("test", "log", NULL, "trace");
+
+	int quiet  = log_set_quiet(0);
+	int level  = log_set_level(LOG_DEBUG);
+	int header = log_set_header(1);
+
+	log_fatal("test", "log", NULL, "fatal");
+	log_debug("test", "log", "stdout", "stdout test");
+
+	log_set_header(0);
+
+	log_debug("test", "log", NULL, "stdout test");
+	log_debug("test", "log", "stdout", "stdout test");
+
+	log_init(NULL);
+
+	log_set_quiet(quiet);
+	log_set_level(level);
+	log_set_header(header);
+
+	log_level_str(LOG_TRACE);
+
+	log_set((log_t *)log);
+
+	return ret;
+}
+
+static int t_print()
+{
+	int ret = 0;
+
+	char cbuf[2]  = { 0 };
+	wchar wbuf[2] = { 0 };
+
+	EXPECT(c_printv(NULL, NULL), 0);
+	EXPECT(c_fprintv(NULL, NULL, NULL), 0);
+	const char *temp = "temp.txt";
+
+	FILE *file = file_open(temp, "wb+");
+	fclose(file);
+	file = file_open(temp, "r");
+	EXPECT(c_fprintf(file, "Test"), 0);
+	fclose(file);
+	file_delete(temp);
+
+	EXPECT(c_sprintv(NULL, 0, 0, NULL, NULL), 0);
+	EXPECT(c_sprintf(cbuf, sizeof(cbuf), 0, "abc"), 0);
+	EXPECT(c_wprintv(NULL, NULL), 0);
+	EXPECT(c_fwprintv(NULL, NULL, NULL), 0);
+	EXPECT(c_swprintv(NULL, 0, 0, NULL, NULL), 0);
+	EXPECT(c_swprintf(wbuf, sizeof(wbuf), 0, L"abc"), 0);
+	EXPECT(c_setmode(NULL, 0), 0);
+	EXPECT(c_fflush(NULL), 1);
+	EXPECT(c_v(NULL, 0, 0, NULL), 0);
+	EXPECT(c_vr(NULL, 0, 0, NULL), 0);
+	EXPECT(c_ur(NULL, 0, 0, NULL), 0);
+	EXPECT(c_wv(NULL, 0, 0, NULL), 0);
+	EXPECT(c_wvr(NULL, 0, 0, NULL), 0);
+	EXPECT(c_wur(NULL, 0, 0, NULL), 0);
+
+	return ret;
+}
+
+static int t_char()
+{
+	int ret = 0;
 
 	c_fflush(stdout);
 	c_fflush(stderr);
-
-	log_info("test_cplatform", "main", NULL, "print start");
-
+	c_printf("\n");
+	c_fflush(stdout);
 	c_fflush(stderr);
 
 	const int rh  = 6;
 	const int rc  = 6;
 	const int hrc = (rc - 6) / 2;
-
-	c_printf("\n");
 
 	c_printf("%*s | %-*s | %-*s\n", rh, "", rc, "char", rc, "wchar");
 
@@ -158,7 +225,7 @@ int main(int argc, char **argv)
 	EXPECT(c_wv(c_wprintf_cb, 0, 0, NULL), 2);
 	EXPECT(c_wvr(c_wprintf_cb, 0, 0, NULL), 2);
 	EXPECT(c_wur(c_wprintf_cb, 0, 0, NULL), 2);
-	c_printf("\n");
+	c_wprintf(L"\n");
 	c_fflush(stdout);
 
 	line(rh, rc);
@@ -184,88 +251,117 @@ int main(int argc, char **argv)
 	EXPECT(c_wv(c_fwprintf_cb, 0, 0, stderr), 2);
 	EXPECT(c_wvr(c_fwprintf_cb, 0, 0, stderr), 2);
 	EXPECT(c_wur(c_fwprintf_cb, 0, 0, stderr), 2);
-	c_fprintf(stderr, "\n");
 	c_fflush(stderr);
+	c_fprintf(stdout, "\n\n");
+	c_fflush(stdout);
 
-	{
-		const char exp[] = "│ \r\n├─\r\n└─\r\n";
+	return ret;
+}
 
-		const char *path = "char.txt";
+static int t_file()
+{
+	int ret = 0;
 
-		FILE *file = file_open(path, "wb+");
+	const char exp[] = "│ \r\n├─\r\n└─\r\n";
 
-		EXPECT(c_v(c_fprintf_cb, 0, 0, file), 4);
-		c_fprintf(file, "\r\n");
-		EXPECT(c_vr(c_fprintf_cb, 0, 0, file), 6);
-		c_fprintf(file, "\r\n");
-		EXPECT(c_ur(c_fprintf_cb, 0, 0, file), 6);
-		c_fprintf(file, "\r\n");
+	const char *path = "char.txt";
 
-		fclose(file);
-		file = file_open(path, "rb+");
-		char data[64] = { 0 };
-		file_read(file, sizeof(exp), data, sizeof(data));
-		fclose(file);
-		file_delete(path);
+	FILE *file = file_open(path, "wb+");
 
-		EXPECT_STR(data, exp);
+	EXPECT(c_v(c_fprintf_cb, 0, 0, file), 4);
+	c_fprintf(file, "\r\n");
+	EXPECT(c_vr(c_fprintf_cb, 0, 0, file), 6);
+	c_fprintf(file, "\r\n");
+	EXPECT(c_ur(c_fprintf_cb, 0, 0, file), 6);
+	c_fprintf(file, "\r\n");
 
-		char buf[64] = { 0 };
-		int off = 0;
-		EXPECT(c_v(c_sprintf_cb, sizeof(buf), off, buf), 4);
-		off += 4;
-		off += c_sprintf(buf, sizeof(buf), off, "\r\n");
-		EXPECT(c_vr(c_sprintf_cb, sizeof(buf), off, buf), 6);
-		off += 6;
-		off += c_sprintf(buf, sizeof(buf), off, "\r\n");
-		EXPECT(c_ur(c_sprintf_cb, sizeof(buf), off, buf), 6);
-		off += 6;
-		off += c_sprintf(buf, sizeof(buf), off, "\r\n");
+	fclose(file);
+	file	      = file_open(path, "rb+");
+	char data[64] = { 0 };
+	EXPECT(file_read(file, sizeof(exp) - 1, data, sizeof(data)), sizeof(exp) - 1);
+	fclose(file);
+	file_delete(path);
 
-		EXPECT_STR(buf, exp);
-	}
+	EXPECT_STR(data, exp);
 
-	{
-		const wchar exp[] = L"\u2502 \r\n\u251C\u2500\r\n\u2514\u2500\r\n";
+	char buf[64] = { 0 };
+	int off	     = 0;
+	EXPECT(c_v(c_sprintf_cb, sizeof(buf), off, buf), 4);
+	off += 4;
+	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
+	EXPECT(c_vr(c_sprintf_cb, sizeof(buf), off, buf), 6);
+	off += 6;
+	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
+	EXPECT(c_ur(c_sprintf_cb, sizeof(buf), off, buf), 6);
+	off += 6;
+	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
 
-		const char *path = "wchar.txt";
+	EXPECT_STR(buf, exp);
+	return ret;
+}
 
-		FILE *file = file_open(path, "wb+");
+static int t_wfile()
+{
+	int ret = 0;
 
-		EXPECT(c_wv(c_fwprintf_cb, 0, 0, file), 2);
-		c_fwprintf(file, L"\n");
-		EXPECT(c_wvr(c_fwprintf_cb, 0, 0, file), 2);
-		c_fwprintf(file, L"\n");
-		EXPECT(c_wur(c_fwprintf_cb, 0, 0, file), 2);
-		c_fwprintf(file, L"\n");
+	const wchar exp[] = L"\u2502 \r\n\u251C\u2500\r\n\u2514\u2500\r\n";
 
-		fclose(file);
+	const char *path = "wchar.txt";
 
-		file = file_open(path, "rb+");
-		wchar data[64] = { 0 };
-		file_read(file, sizeof(exp), data, sizeof(data));
-		//EXPECT_WSTR(data, exp); //TODO: read wchar from file
-		fclose(file);
-		file_delete(path);
+	FILE *file = file_open(path, "wb+");
 
-		wchar buf[64] = { 0 };
-		int off = 0;
-		EXPECT(c_wv(c_swprintf_cb, sizeof(buf), off, buf), 2);
-		off += 2;
-		off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-		EXPECT(c_wvr(c_swprintf_cb, sizeof(buf), off, buf), 2);
-		off += 2;
-		off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-		EXPECT(c_wur(c_swprintf_cb, sizeof(buf), off, buf), 2);
-		off += 2;
-		off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
+	EXPECT(c_wv(c_fwprintf_cb, 0, 0, file), 2);
+	c_fwprintf(file, L"\n");
+	EXPECT(c_wvr(c_fwprintf_cb, 0, 0, file), 2);
+	c_fwprintf(file, L"\n");
+	EXPECT(c_wur(c_fwprintf_cb, 0, 0, file), 2);
+	c_fwprintf(file, L"\n");
 
-		EXPECT_WSTR(buf, exp);
-	}
+	fclose(file);
 
-	c_printf("\n");
+	file	       = file_open(path, "rb+");
+	wchar data[64] = { 0 };
+	file_read(file, sizeof(exp) - 1, data, sizeof(data));
+	//EXPECT_WSTR(data, exp); //TODO: read wchar from file
+	fclose(file);
+	file_delete(path);
 
-	log_info("test_cplatform", "main", NULL, "print end");
+	wchar buf[64] = { 0 };
+	int off	      = 0;
+	EXPECT(c_wv(c_swprintf_cb, sizeof(buf), off, buf), 2);
+	off += 2;
+	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
+	EXPECT(c_wvr(c_swprintf_cb, sizeof(buf), off, buf), 2);
+	off += 2;
+	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
+	EXPECT(c_wur(c_swprintf_cb, sizeof(buf), off, buf), 2);
+	off += 2;
+	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
+
+	EXPECT_WSTR(buf, exp);
+
+	return ret;
+}
+
+int main(int argc, char **argv)
+{
+	(void)argc;
+	(void)argv;
+
+	int ret = 0;
+
+	log_t log = { 0 };
+	log_init(&log);
+	log_set_level(LOG_FATAL);
+	c_print_init();
+
+	EXPECT(t_time(), 0);
+	EXPECT(t_log(), 0);
+	EXPECT(t_log_callback(), 0);
+	EXPECT(t_print(), 0);
+	EXPECT(t_char(), 0);
+	EXPECT(t_file(), 0);
+	EXPECT(t_wfile(), 0);
 
 	return ret;
 }
