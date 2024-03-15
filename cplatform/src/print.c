@@ -378,7 +378,7 @@ int c_v(c_printf_fn cb, size_t size, int off, void *priv)
 		return 0;
 	}
 
-	return cb(priv, size, off, "\xB3 ");
+	return cb(priv, size, off, "│ ");
 }
 
 int c_vr(c_printf_fn cb, size_t size, int off, void *priv)
@@ -387,7 +387,7 @@ int c_vr(c_printf_fn cb, size_t size, int off, void *priv)
 		return 0;
 	}
 
-	return cb(priv, size, off, "\xC3\xC4");
+	return cb(priv, size, off, "├─");
 }
 
 int c_ur(c_printf_fn cb, size_t size, int off, void *priv)
@@ -396,5 +396,5 @@ int c_ur(c_printf_fn cb, size_t size, int off, void *priv)
 		return 0;
 	}
 
-	return cb(priv, size, off, "\xC0\xC4");
+	return cb(priv, size, off, "└─");
 }
