@@ -1,0 +1,6 @@
+NAME: libtest_cplatform
+TYPE: LIB
+SOURCE: src
+INCLUDE: include
+DEPENDS: cplatform
+INCLUDES: cplatform
