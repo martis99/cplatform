@@ -352,11 +352,6 @@ int test_cplatform()
 {
 	int ret = 0;
 
-	log_t log = { 0 };
-	log_init(&log);
-	log_set_level(LOG_FATAL);
-	c_print_init();
-
 	EXPECT(t_time(), 0);
 	EXPECT(t_log(), 0);
 	EXPECT(t_log_callback(), 0);
