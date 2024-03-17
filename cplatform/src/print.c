@@ -297,33 +297,6 @@ int c_fprintv_cb(void *priv, size_t size, int off, const char *fmt, va_list args
 	return c_fprintv(priv, fmt, args);
 }
 
-int c_printf_cb(void *buf, size_t size, int off, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	const int len = c_printv_cb(buf, size, off, fmt, args);
-	va_end(args);
-	return len;
-}
-
-int c_sprintf_cb(void *buf, size_t size, int off, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	const int len = c_sprintv_cb(buf, size - off * sizeof(char), off, fmt, args);
-	va_end(args);
-	return len;
-}
-
-int c_fprintf_cb(void *priv, size_t size, int off, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	const int len = c_fprintv_cb(priv, size, off, fmt, args);
-	va_end(args);
-	return len;
-}
-
 int c_wprintv_cb(void *buf, size_t size, int off, const wchar *fmt, va_list args)
 {
 	(void)buf;
@@ -342,33 +315,6 @@ int c_fwprintv_cb(void *priv, size_t size, int off, const wchar *fmt, va_list ar
 	(void)size;
 	(void)off;
 	return c_fwprintv(priv, fmt, args);
-}
-
-int c_wprintf_cb(void *buf, size_t size, int off, const wchar *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	const int len = c_wprintv_cb(buf, size, off, fmt, args);
-	va_end(args);
-	return len;
-}
-
-int c_swprintf_cb(void *buf, size_t size, int off, const wchar *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	const int len = c_swprintv_cb(buf, size, off, fmt, args);
-	va_end(args);
-	return len;
-}
-
-int c_fwprintf_cb(void *priv, size_t size, int off, const wchar *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	const int len = c_fwprintv_cb(priv, size, off, fmt, args);
-	va_end(args);
-	return len;
 }
 
 int c_v(c_printv_fn cb, size_t size, int off, void *stream)

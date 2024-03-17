@@ -1,5 +1,6 @@
 #include "test_cplatform.h"
 
+#include "cplatform.h"
 #include "c_time.h"
 #include "log.h"
 #include "platform.h"
@@ -80,6 +81,15 @@ static void line(int rh, int rc)
 	}
 
 	c_printf("\n");
+}
+
+static int t_init_free() {
+	int ret = 0;
+
+	EXPECT(cplatform_init(NULL), NULL);
+	EXPECT(cplatform_free(NULL), 1);
+
+	return ret;
 }
 
 static int t_time()
@@ -352,6 +362,7 @@ int test_cplatform()
 {
 	int ret = 0;
 
+	EXPECT(t_init_free(), 0);
 	EXPECT(t_time(), 0);
 	EXPECT(t_log(), 0);
 	EXPECT(t_log_callback(), 0);

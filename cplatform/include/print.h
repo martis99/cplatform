@@ -36,20 +36,10 @@ int c_printv_cb(void *buf, size_t size, int off, const char *fmt, va_list args);
 int c_sprintv_cb(void *buf, size_t size, int off, const char *fmt, va_list args);
 int c_fprintv_cb(void *file, size_t size, int off, const char *fmt, va_list args);
 
-typedef int (*c_printf_fn)(void *stream, size_t size, int off, const char *fmt, ...);
-int c_printf_cb(void *buf, size_t size, int off, const char *fmt, ...);
-int c_sprintf_cb(void *buf, size_t size, int off, const char *fmt, ...);
-int c_fprintf_cb(void *file, size_t size, int off, const char *fmt, ...);
-
 typedef int (*c_wprintv_fn)(void *stream, size_t size, int off, const wchar *fmt, va_list args);
 int c_wprintv_cb(void *buf, size_t size, int off, const wchar *fmt, va_list args);
 int c_swprintv_cb(void *buf, size_t size, int off, const wchar *fmt, va_list args);
 int c_fwprintv_cb(void *file, size_t size, int off, const wchar *fmt, va_list args);
-
-typedef int (*c_wprintf_fn)(void *stream, size_t size, int off, const wchar *fmt, ...);
-int c_wprintf_cb(void *buf, size_t size, int off, const wchar *fmt, ...);
-int c_swprintf_cb(void *buf, size_t size, int off, const wchar *fmt, ...);
-int c_fwprintf_cb(void *file, size_t size, int off, const wchar *fmt, ...);
 
 int c_v(c_printv_fn cb, size_t size, int off, void *stream);
 int c_vr(c_printv_fn cb, size_t size, int off, void *stream);
