@@ -223,39 +223,39 @@ static int t_char()
 	line(rh, rc);
 
 	c_printf("%*s | %*s", rh, "print", hrc, "");
-	EXPECT(c_v(c_printf_cb, 0, 0, NULL), 4);
-	EXPECT(c_vr(c_printf_cb, 0, 0, NULL), 6);
-	EXPECT(c_ur(c_printf_cb, 0, 0, NULL), 6);
+	EXPECT(c_v(c_printv_cb, 0, 0, NULL), 4);
+	EXPECT(c_vr(c_printv_cb, 0, 0, NULL), 6);
+	EXPECT(c_ur(c_printv_cb, 0, 0, NULL), 6);
 	c_printf("%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wv(c_wprintf_cb, 0, 0, NULL), 2);
-	EXPECT(c_wvr(c_wprintf_cb, 0, 0, NULL), 2);
-	EXPECT(c_wur(c_wprintf_cb, 0, 0, NULL), 2);
+	EXPECT(c_wv(c_wprintv_cb, 0, 0, NULL), 2);
+	EXPECT(c_wvr(c_wprintv_cb, 0, 0, NULL), 2);
+	EXPECT(c_wur(c_wprintv_cb, 0, 0, NULL), 2);
 	c_wprintf(L"\n");
 	c_fflush(stdout);
 
 	line(rh, rc);
 
 	c_printf("%*s | %*s", rh, "stdout", hrc, "");
-	EXPECT(c_v(c_fprintf_cb, 0, 0, stdout), 4);
-	EXPECT(c_vr(c_fprintf_cb, 0, 0, stdout), 6);
-	EXPECT(c_ur(c_fprintf_cb, 0, 0, stdout), 6);
+	EXPECT(c_v(c_fprintv_cb, 0, 0, stdout), 4);
+	EXPECT(c_vr(c_fprintv_cb, 0, 0, stdout), 6);
+	EXPECT(c_ur(c_fprintv_cb, 0, 0, stdout), 6);
 	c_printf("%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wv(c_fwprintf_cb, 0, 0, stdout), 2);
-	EXPECT(c_wvr(c_fwprintf_cb, 0, 0, stdout), 2);
-	EXPECT(c_wur(c_fwprintf_cb, 0, 0, stdout), 2);
+	EXPECT(c_wv(c_fwprintv_cb, 0, 0, stdout), 2);
+	EXPECT(c_wvr(c_fwprintv_cb, 0, 0, stdout), 2);
+	EXPECT(c_wur(c_fwprintv_cb, 0, 0, stdout), 2);
 	c_printf("\n");
 
 	line(rh, rc);
 	c_fflush(stdout);
 
 	c_fprintf(stderr, "%*s | %*s", rh, "stderr", hrc, "");
-	EXPECT(c_v(c_fprintf_cb, 0, 0, stderr), 4);
-	EXPECT(c_vr(c_fprintf_cb, 0, 0, stderr), 6);
-	EXPECT(c_ur(c_fprintf_cb, 0, 0, stderr), 6);
+	EXPECT(c_v(c_fprintv_cb, 0, 0, stderr), 4);
+	EXPECT(c_vr(c_fprintv_cb, 0, 0, stderr), 6);
+	EXPECT(c_ur(c_fprintv_cb, 0, 0, stderr), 6);
 	c_fprintf(stderr, "%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wv(c_fwprintf_cb, 0, 0, stderr), 2);
-	EXPECT(c_wvr(c_fwprintf_cb, 0, 0, stderr), 2);
-	EXPECT(c_wur(c_fwprintf_cb, 0, 0, stderr), 2);
+	EXPECT(c_wv(c_fwprintv_cb, 0, 0, stderr), 2);
+	EXPECT(c_wvr(c_fwprintv_cb, 0, 0, stderr), 2);
+	EXPECT(c_wur(c_fwprintv_cb, 0, 0, stderr), 2);
 	c_fflush(stderr);
 	c_fprintf(stdout, "\n\n");
 	c_fflush(stdout);
@@ -273,11 +273,11 @@ static int t_file()
 
 	FILE *file = file_open(path, "wb+");
 
-	EXPECT(c_v(c_fprintf_cb, 0, 0, file), 4);
+	EXPECT(c_v(c_fprintv_cb, 0, 0, file), 4);
 	c_fprintf(file, "\r\n");
-	EXPECT(c_vr(c_fprintf_cb, 0, 0, file), 6);
+	EXPECT(c_vr(c_fprintv_cb, 0, 0, file), 6);
 	c_fprintf(file, "\r\n");
-	EXPECT(c_ur(c_fprintf_cb, 0, 0, file), 6);
+	EXPECT(c_ur(c_fprintv_cb, 0, 0, file), 6);
 	c_fprintf(file, "\r\n");
 
 	fclose(file);
@@ -291,13 +291,13 @@ static int t_file()
 
 	char buf[64] = { 0 };
 	int off	     = 0;
-	EXPECT(c_v(c_sprintf_cb, sizeof(buf), off, buf), 4);
+	EXPECT(c_v(c_sprintv_cb, sizeof(buf), off, buf), 4);
 	off += 4;
 	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
-	EXPECT(c_vr(c_sprintf_cb, sizeof(buf), off, buf), 6);
+	EXPECT(c_vr(c_sprintv_cb, sizeof(buf), off, buf), 6);
 	off += 6;
 	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
-	EXPECT(c_ur(c_sprintf_cb, sizeof(buf), off, buf), 6);
+	EXPECT(c_ur(c_sprintv_cb, sizeof(buf), off, buf), 6);
 	off += 6;
 	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
 
@@ -315,11 +315,11 @@ static int t_wfile()
 
 	FILE *file = file_open(path, "wb+");
 
-	EXPECT(c_wv(c_fwprintf_cb, 0, 0, file), 2);
+	EXPECT(c_wv(c_fwprintv_cb, 0, 0, file), 2);
 	c_fwprintf(file, L"\n");
-	EXPECT(c_wvr(c_fwprintf_cb, 0, 0, file), 2);
+	EXPECT(c_wvr(c_fwprintv_cb, 0, 0, file), 2);
 	c_fwprintf(file, L"\n");
-	EXPECT(c_wur(c_fwprintf_cb, 0, 0, file), 2);
+	EXPECT(c_wur(c_fwprintv_cb, 0, 0, file), 2);
 	c_fwprintf(file, L"\n");
 
 	fclose(file);
@@ -333,13 +333,13 @@ static int t_wfile()
 
 	wchar buf[64] = { 0 };
 	int off	      = 0;
-	EXPECT(c_wv(c_swprintf_cb, sizeof(buf), off, buf), 2);
+	EXPECT(c_wv(c_swprintv_cb, sizeof(buf), off, buf), 2);
 	off += 2;
 	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-	EXPECT(c_wvr(c_swprintf_cb, sizeof(buf), off, buf), 2);
+	EXPECT(c_wvr(c_swprintv_cb, sizeof(buf), off, buf), 2);
 	off += 2;
 	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-	EXPECT(c_wur(c_swprintf_cb, sizeof(buf), off, buf), 2);
+	EXPECT(c_wur(c_swprintv_cb, sizeof(buf), off, buf), 2);
 	off += 2;
 	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
 

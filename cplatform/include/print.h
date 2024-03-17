@@ -51,12 +51,12 @@ int c_wprintf_cb(void *buf, size_t size, int off, const wchar *fmt, ...);
 int c_swprintf_cb(void *buf, size_t size, int off, const wchar *fmt, ...);
 int c_fwprintf_cb(void *file, size_t size, int off, const wchar *fmt, ...);
 
-int c_v(c_printf_fn cb, size_t size, int off, void *stream);
-int c_vr(c_printf_fn cb, size_t size, int off, void *stream);
-int c_ur(c_printf_fn cb, size_t size, int off, void *stream);
+int c_v(c_printv_fn cb, size_t size, int off, void *stream);
+int c_vr(c_printv_fn cb, size_t size, int off, void *stream);
+int c_ur(c_printv_fn cb, size_t size, int off, void *stream);
 
-int c_wv(c_wprintf_fn cb, size_t size, int off, void *stream);
-int c_wvr(c_wprintf_fn cb, size_t size, int off, void *stream);
-int c_wur(c_wprintf_fn cb, size_t size, int off, void *stream);
+int c_wv(c_wprintv_fn cb, size_t size, int off, void *stream);
+int c_wvr(c_wprintv_fn cb, size_t size, int off, void *stream);
+int c_wur(c_wprintv_fn cb, size_t size, int off, void *stream);
 
 #endif

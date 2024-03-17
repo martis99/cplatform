@@ -208,7 +208,10 @@ int c_swprintv(wchar *buf, size_t size, int off, const wchar *fmt, va_list args)
 	va_copy(copy, args);
 	int ret;
 #if defined(C_WIN)
+	#pragma warning(push)
+	#pragma warning(disable : 6387)
 	ret = vswprintf_s(buf, size / sizeof(wchar) - off, fmt, copy);
+	#pragma warning(push)
 	va_end(copy);
 #else
 	ret = vswprintf(buf, size / sizeof(wchar) - off, fmt, copy);
@@ -368,56 +371,62 @@ int c_fwprintf_cb(void *priv, size_t size, int off, const wchar *fmt, ...)
 	return len;
 }
 
-int c_v(c_printf_fn cb, size_t size, int off, void *stream)
+int c_v(c_printv_fn cb, size_t size, int off, void *stream)
 {
 	if (cb == NULL) {
 		return 0;
 	}
 
-	return cb(stream, size, off, "│ ");
+	va_list empty = { 0 };
+	return cb(stream, size, off, "│ ", empty);
 }
 
-int c_vr(c_printf_fn cb, size_t size, int off, void *stream)
+int c_vr(c_printv_fn cb, size_t size, int off, void *stream)
 {
 	if (cb == NULL) {
 		return 0;
 	}
 
-	return cb(stream, size, off, "├─");
+	va_list empty = { 0 };
+	return cb(stream, size, off, "├─", empty);
 }
 
-int c_ur(c_printf_fn cb, size_t size, int off, void *stream)
+int c_ur(c_printv_fn cb, size_t size, int off, void *stream)
 {
 	if (cb == NULL) {
 		return 0;
 	}
 
-	return cb(stream, size, off, "└─");
+	va_list empty = { 0 };
+	return cb(stream, size, off, "└─", empty);
 }
 
-int c_wv(c_wprintf_fn cb, size_t size, int off, void *stream)
+int c_wv(c_wprintv_fn cb, size_t size, int off, void *stream)
 {
 	if (cb == NULL) {
 		return 0;
 	}
 
-	return cb(stream, size, off, L"\u2502 ");
+	va_list empty = { 0 };
+	return cb(stream, size, off, L"\u2502 ", empty);
 }
 
-int c_wvr(c_wprintf_fn cb, size_t size, int off, void *stream)
+int c_wvr(c_wprintv_fn cb, size_t size, int off, void *stream)
 {
 	if (cb == NULL) {
 		return 0;
 	}
 
-	return cb(stream, size, off, L"\u251C\u2500");
+	va_list empty = { 0 };
+	return cb(stream, size, off, L"\u251C\u2500", empty);
 }
 
-int c_wur(c_wprintf_fn cb, size_t size, int off, void *stream)
+int c_wur(c_wprintv_fn cb, size_t size, int off, void *stream)
 {
 	if (cb == NULL) {
 		return 0;
 	}
 
-	return cb(stream, size, off, L"\u2514\u2500");
+	va_list empty = { 0 };
+	return cb(stream, size, off, L"\u2514\u2500", empty);
 }
