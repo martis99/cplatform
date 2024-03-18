@@ -29,49 +29,14 @@ static int stdout_callback(log_event_t *ev)
 	int len = 0;
 
 	if (ev->header) {
-		len += fprintf(ev->priv, "%s %s%-5s\x1b[0m [%s:%s] \x1b[90m%s:%d:\x1b[0m %s%s%s", ev->time, level_colors[ev->level], level_strs[ev->level], ev->pkg,
-			       ev->file, ev->func, ev->line, tag_s, tag, tag_e);
+		len += c_print_exec(ev->print, "%s %s%-5s\x1b[0m [%s:%s] \x1b[90m%s:%d:\x1b[0m %s%s%s", ev->time, level_colors[ev->level], level_strs[ev->level], ev->pkg,
+				    ev->file, ev->func, ev->line, tag_s, tag, tag_e);
 	} else {
-		len += fprintf(ev->priv, "%s%s%s", tag_s, tag, tag_e);
+		len += c_print_exec(ev->print, "%s%s%s", tag_s, tag, tag_e);
 	}
 
-	len += vfprintf(ev->priv, ev->fmt, ev->ap);
-	len += fprintf(ev->priv, "\n");
-	fflush(ev->priv);
-	return len;
-}
-
-static int log_fprintf(log_event_t *ev, int off, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	const int len = ev->print(ev->priv, ev->size, off, fmt, args);
-	va_end(args);
-	return len;
-}
-
-static int print_callback(log_event_t *ev)
-{
-	const char *tag_s = "";
-	const char *tag_e = "";
-	const char *tag	  = "";
-	if (ev->tag != NULL) {
-		tag_s = "[";
-		tag_e = "] ";
-		tag   = ev->tag;
-	}
-
-	int len = 0;
-
-	if (ev->header) {
-		len += log_fprintf(ev, ev->off + len, "%s %-5s [%s:%s] %s:%d: %s%s%s", ev->time, level_strs[ev->level], ev->pkg, ev->file, ev->func, ev->line, tag_s, tag,
-				   tag_e);
-	} else {
-		len += log_fprintf(ev, ev->off + len, "%s%s%s", tag_s, tag, tag_e);
-	}
-
-	len += ev->print(ev->priv, ev->size, ev->off + len, ev->fmt, ev->ap);
-	len += log_fprintf(ev, ev->off + len, "\n");
+	len += c_print_execv(ev->print, ev->fmt, ev->ap);
+	len += c_print_exec(ev->print, "\n");
 	return len;
 }
 
@@ -144,7 +109,7 @@ int log_set_header(int enable)
 	return header;
 }
 
-static int log_add_cb(log_cb log, c_printv_fn print, size_t size, int off, void *priv, int level, int header)
+int log_add_callback(log_cb log, print_dst_t print, int level, int header)
 {
 	if (s_log == NULL) {
 		return 1;
@@ -155,9 +120,6 @@ static int log_add_cb(log_cb log, c_printv_fn print, size_t size, int off, void 
 			s_log->callbacks[i] = (log_callback_t){
 				.log	= log,
 				.print	= print,
-				.size	= size,
-				.off	= off,
-				.priv	= priv,
 				.level	= level,
 				.header = header,
 			};
@@ -167,25 +129,12 @@ static int log_add_cb(log_cb log, c_printv_fn print, size_t size, int off, void 
 	return 1;
 }
 
-int log_add_callback(log_cb cb, void *priv, int level, int header)
-{
-	return log_add_cb(cb, NULL, 0, 0, priv, level, header);
-}
-
-int log_add_print(c_printv_fn cb, size_t size, int off, void *priv, int level, int header)
-{
-	return log_add_cb(print_callback, cb, size, off, priv, level, header);
-}
-
-static int init_event(log_event_t *ev, c_printv_fn print, size_t size, int off, void *priv, int header)
+static int init_event(log_event_t *ev, print_dst_t print, int header)
 {
 	if (!ev->time[0]) {
 		c_time_str(ev->time);
 	}
 	ev->print  = print;
-	ev->size   = size;
-	ev->off	   = off;
-	ev->priv   = priv;
 	ev->header = header;
 	return 0;
 }
@@ -207,7 +156,7 @@ int log_log(int level, const char *pkg, const char *file, const char *func, int 
 	};
 
 	if (!s_log->quiet && level >= s_log->level) {
-		init_event(&ev, NULL, 0, 0, stderr, s_log->header);
+		init_event(&ev, PRINT_DST_FILE(stderr), s_log->header);
 		va_start(ev.ap, fmt);
 		stdout_callback(&ev);
 		va_end(ev.ap);
@@ -216,9 +165,9 @@ int log_log(int level, const char *pkg, const char *file, const char *func, int 
 	for (int i = 0; i < LOG_MAX_CALLBACKS && s_log->callbacks[i].log; i++) {
 		log_callback_t *cb = &s_log->callbacks[i];
 		if (level >= cb->level) {
-			init_event(&ev, cb->print, cb->size, cb->off, cb->priv, cb->header);
+			init_event(&ev, cb->print, cb->header);
 			va_start(ev.ap, fmt);
-			cb->off += cb->log(&ev);
+			cb->print.off += cb->log(&ev);
 			va_end(ev.ap);
 		}
 	}

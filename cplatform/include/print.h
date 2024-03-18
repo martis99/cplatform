@@ -31,22 +31,64 @@ int c_fflush(FILE *file);
 int c_setmode(FILE *file, int mode);
 int c_setmodew(FILE *file);
 
-typedef int (*c_printv_fn)(void *stream, size_t size, int off, const char *fmt, va_list args);
-int c_printv_cb(void *buf, size_t size, int off, const char *fmt, va_list args);
-int c_sprintv_cb(void *buf, size_t size, int off, const char *fmt, va_list args);
-int c_fprintv_cb(void *file, size_t size, int off, const char *fmt, va_list args);
+typedef struct print_dst_s print_dst_t;
+typedef int (*c_printv_fn)(print_dst_t dst, const char *fmt, va_list args);
+struct print_dst_s {
+	c_printv_fn cb;
+	size_t size;
+	int off;
+	union {
+		char *buf;
+		FILE *file;
+	} out;
+	void *priv;
+};
 
-typedef int (*c_wprintv_fn)(void *stream, size_t size, int off, const wchar *fmt, va_list args);
-int c_wprintv_cb(void *buf, size_t size, int off, const wchar *fmt, va_list args);
-int c_swprintv_cb(void *buf, size_t size, int off, const wchar *fmt, va_list args);
-int c_fwprintv_cb(void *file, size_t size, int off, const wchar *fmt, va_list args);
+int c_printv_cb(print_dst_t dst, const char *fmt, va_list args);
+int c_sprintv_cb(print_dst_t dst, const char *fmt, va_list args);
+int c_fprintv_cb(print_dst_t dst, const char *fmt, va_list args);
 
-int c_v(c_printv_fn cb, size_t size, int off, void *stream);
-int c_vr(c_printv_fn cb, size_t size, int off, void *stream);
-int c_ur(c_printv_fn cb, size_t size, int off, void *stream);
+typedef struct wprint_dst_s wprint_dst_t;
+typedef int (*c_wprintv_fn)(wprint_dst_t dst, const wchar *fmt, va_list args);
+struct wprint_dst_s {
+	c_wprintv_fn cb;
+	size_t size;
+	int off;
+	union {
+		wchar *buf;
+		FILE *file;
+	} out;
+	void *priv;
+};
 
-int c_wv(c_wprintv_fn cb, size_t size, int off, void *stream);
-int c_wvr(c_wprintv_fn cb, size_t size, int off, void *stream);
-int c_wur(c_wprintv_fn cb, size_t size, int off, void *stream);
+int c_wprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
+int c_swprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
+int c_fwprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
+
+int c_print_execv(print_dst_t dst, const char *fmt, va_list args);
+int c_print_exec(print_dst_t dst, const char *fmt, ...);
+
+int c_wprint_execv(wprint_dst_t dst, const wchar *fmt, va_list args);
+int c_wprint_exec(wprint_dst_t dst, const wchar *fmt, ...);
+
+int c_v(print_dst_t dst);
+int c_vr(print_dst_t dst);
+int c_ur(print_dst_t dst);
+
+int c_wv(wprint_dst_t dst);
+int c_wvr(wprint_dst_t dst);
+int c_wur(wprint_dst_t dst);
+
+// clang-format off
+#define PRINT_DST_NONE() (print_dst_t) { 0 }
+#define PRINT_DST_STD() (print_dst_t) { .cb = c_printv_cb }
+#define PRINT_DST_BUF(_buf, _size, _off) (print_dst_t) { .cb = c_sprintv_cb, .out.buf=_buf, .size=_size, .off=_off }
+#define PRINT_DST_FILE(_file) (print_dst_t) { .cb=c_fprintv_cb, .out.file=_file }
+
+#define PRINT_DST_WNONE() (wprint_dst_t) { 0 }
+#define PRINT_DST_WSTD() (wprint_dst_t) { .cb = c_wprintv_cb }
+#define PRINT_DST_WBUF(_wbuf, _size, _off) (wprint_dst_t) { .cb=c_swprintv_cb, .out.buf=_wbuf, .size=_size, .off=_off }
+#define PRINT_DST_WFILE(_file) (wprint_dst_t) { .cb=c_fwprintv_cb, .out.file=_file }
+// clang-format on
 
 #endif

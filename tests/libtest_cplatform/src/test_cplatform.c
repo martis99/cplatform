@@ -1,7 +1,7 @@
 #include "test_cplatform.h"
 
-#include "cplatform.h"
 #include "c_time.h"
+#include "cplatform.h"
 #include "log.h"
 #include "platform.h"
 
@@ -83,7 +83,8 @@ static void line(int rh, int rc)
 	c_printf("\n");
 }
 
-static int t_init_free() {
+static int t_init_free()
+{
 	int ret = 0;
 
 	EXPECT(cplatform_init(NULL), NULL);
@@ -103,9 +104,32 @@ static int t_time()
 	return ret;
 }
 
+static int print_callback(log_event_t *ev)
+{
+	(void)ev;
+	return 0;
+}
+
 static int t_log()
 {
-	int level = log_set_level(LOG_TRACE);
+	int ret = 0;
+
+	const log_t *log = log_get();
+
+	log_t tmp = *log;
+	log_set(&tmp);
+
+	for (int i = 0; i < LOG_MAX_CALLBACKS; i++) {
+		EXPECT(log_add_callback(print_callback, PRINT_DST_NONE(), LOG_TRACE, 1), 0);
+	}
+
+	EXPECT(log_add_callback(print_callback, PRINT_DST_NONE(), LOG_TRACE, 1), 1);
+
+	int quiet  = log_set_quiet(0);
+	int level  = log_set_level(LOG_TRACE);
+	int header = log_set_header(0);
+	log_trace("test_cplatform", "main", NULL, "");
+	log_set_header(header);
 
 	log_trace(NULL, NULL, NULL, NULL);
 	log_trace("test_cplatform", "main", "test", "trace");
@@ -116,58 +140,14 @@ static int t_log()
 	log_fatal("test_cplatform", "main", "test", "fatal");
 
 	log_set_level(level);
-
-	return 0;
-}
-
-static int print_callback(log_event_t *ev)
-{
-	(void)ev;
-	return 0;
-}
-
-static int t_log_callback()
-{
-	int ret = 0;
-
-	const log_t *log = log_get();
+	log_set_quiet(quiet);
 
 	log_set(NULL);
-	EXPECT(log_add_callback(print_callback, NULL, LOG_TRACE, 1), 1);
-
-	log_t tmp = *log;
-	log_set(&tmp);
-
-	char buf[1024] = { 0 };
-	log_add_print(c_sprintv_cb, sizeof(buf), 0, buf, LOG_DEBUG, 0);
-	log_add_print(c_sprintv_cb, sizeof(buf), 0, buf, LOG_DEBUG, 1);
-
-	for (int i = 2; i < LOG_MAX_CALLBACKS; i++) {
-		EXPECT(log_add_callback(print_callback, NULL, LOG_TRACE, 1), 0);
-	}
-
-	EXPECT(log_add_callback(print_callback, NULL, LOG_TRACE, 1), 1);
-
-	log_debug("test", "log", NULL, "trace");
-
-	int quiet  = log_set_quiet(0);
-	int level  = log_set_level(LOG_DEBUG);
-	int header = log_set_header(1);
-
-	log_fatal("test", "log", NULL, "fatal");
-	log_debug("test", "log", "stdout", "stdout test");
-
+	EXPECT(log_add_callback(print_callback, PRINT_DST_NONE(), LOG_TRACE, 1), 1);
+	log_set_level(LOG_FATAL);
+	log_set_quiet(0);
 	log_set_header(0);
-
-	log_debug("test", "log", NULL, "stdout test");
-	log_debug("test", "log", "stdout", "stdout test");
-
 	log_init(NULL);
-
-	log_set_quiet(quiet);
-	log_set_level(level);
-	log_set_header(header);
-
 	log_level_str(LOG_TRACE);
 
 	log_set((log_t *)log);
@@ -186,7 +166,11 @@ static int t_print()
 	FILE *file = file_open(temp, "wb+");
 	fclose(file);
 	file = file_open(temp, "r");
+
+	int level = log_set_level(LOG_FATAL);
 	EXPECT(c_fprintf(file, "Test"), 0);
+	log_set_level(level);
+
 	fclose(file);
 	file_delete(temp);
 
@@ -204,12 +188,12 @@ static int t_print()
 #endif
 	EXPECT(c_setmode(NULL, 0), 0);
 	EXPECT(c_fflush(NULL), 1);
-	EXPECT(c_v(NULL, 0, 0, NULL), 0);
-	EXPECT(c_vr(NULL, 0, 0, NULL), 0);
-	EXPECT(c_ur(NULL, 0, 0, NULL), 0);
-	EXPECT(c_wv(NULL, 0, 0, NULL), 0);
-	EXPECT(c_wvr(NULL, 0, 0, NULL), 0);
-	EXPECT(c_wur(NULL, 0, 0, NULL), 0);
+	EXPECT(c_v(PRINT_DST_NONE()), 0);
+	EXPECT(c_vr(PRINT_DST_NONE()), 0);
+	EXPECT(c_ur(PRINT_DST_NONE()), 0);
+	EXPECT(c_wv(PRINT_DST_WNONE()), 0);
+	EXPECT(c_wvr(PRINT_DST_WNONE()), 0);
+	EXPECT(c_wur(PRINT_DST_WNONE()), 0);
 
 	return ret;
 }
@@ -233,39 +217,39 @@ static int t_char()
 	line(rh, rc);
 
 	c_printf("%*s | %*s", rh, "print", hrc, "");
-	EXPECT(c_v(c_printv_cb, 0, 0, NULL), 4);
-	EXPECT(c_vr(c_printv_cb, 0, 0, NULL), 6);
-	EXPECT(c_ur(c_printv_cb, 0, 0, NULL), 6);
+	EXPECT(c_v(PRINT_DST_STD()), 4);
+	EXPECT(c_vr(PRINT_DST_STD()), 6);
+	EXPECT(c_ur(PRINT_DST_STD()), 6);
 	c_printf("%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wv(c_wprintv_cb, 0, 0, NULL), 2);
-	EXPECT(c_wvr(c_wprintv_cb, 0, 0, NULL), 2);
-	EXPECT(c_wur(c_wprintv_cb, 0, 0, NULL), 2);
+	EXPECT(c_wv(PRINT_DST_WSTD()), 2);
+	EXPECT(c_wvr(PRINT_DST_WSTD()), 2);
+	EXPECT(c_wur(PRINT_DST_WSTD()), 2);
 	c_wprintf(L"\n");
 	c_fflush(stdout);
 
 	line(rh, rc);
 
 	c_printf("%*s | %*s", rh, "stdout", hrc, "");
-	EXPECT(c_v(c_fprintv_cb, 0, 0, stdout), 4);
-	EXPECT(c_vr(c_fprintv_cb, 0, 0, stdout), 6);
-	EXPECT(c_ur(c_fprintv_cb, 0, 0, stdout), 6);
+	EXPECT(c_v(PRINT_DST_FILE(stdout)), 4);
+	EXPECT(c_vr(PRINT_DST_FILE(stdout)), 6);
+	EXPECT(c_ur(PRINT_DST_FILE(stdout)), 6);
 	c_printf("%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wv(c_fwprintv_cb, 0, 0, stdout), 2);
-	EXPECT(c_wvr(c_fwprintv_cb, 0, 0, stdout), 2);
-	EXPECT(c_wur(c_fwprintv_cb, 0, 0, stdout), 2);
+	EXPECT(c_wv(PRINT_DST_WFILE(stdout)), 2);
+	EXPECT(c_wvr(PRINT_DST_WFILE(stdout)), 2);
+	EXPECT(c_wur(PRINT_DST_WFILE(stdout)), 2);
 	c_printf("\n");
 
 	line(rh, rc);
 	c_fflush(stdout);
 
 	c_fprintf(stderr, "%*s | %*s", rh, "stderr", hrc, "");
-	EXPECT(c_v(c_fprintv_cb, 0, 0, stderr), 4);
-	EXPECT(c_vr(c_fprintv_cb, 0, 0, stderr), 6);
-	EXPECT(c_ur(c_fprintv_cb, 0, 0, stderr), 6);
+	EXPECT(c_v(PRINT_DST_FILE(stderr)), 4);
+	EXPECT(c_vr(PRINT_DST_FILE(stderr)), 6);
+	EXPECT(c_ur(PRINT_DST_FILE(stderr)), 6);
 	c_fprintf(stderr, "%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wv(c_fwprintv_cb, 0, 0, stderr), 2);
-	EXPECT(c_wvr(c_fwprintv_cb, 0, 0, stderr), 2);
-	EXPECT(c_wur(c_fwprintv_cb, 0, 0, stderr), 2);
+	EXPECT(c_wv(PRINT_DST_WFILE(stderr)), 2);
+	EXPECT(c_wvr(PRINT_DST_WFILE(stderr)), 2);
+	EXPECT(c_wur(PRINT_DST_WFILE(stderr)), 2);
 	c_fflush(stderr);
 	c_fprintf(stdout, "\n\n");
 	c_fflush(stdout);
@@ -283,11 +267,11 @@ static int t_file()
 
 	FILE *file = file_open(path, "wb+");
 
-	EXPECT(c_v(c_fprintv_cb, 0, 0, file), 4);
+	EXPECT(c_v(PRINT_DST_FILE(file)), 4);
 	c_fprintf(file, "\r\n");
-	EXPECT(c_vr(c_fprintv_cb, 0, 0, file), 6);
+	EXPECT(c_vr(PRINT_DST_FILE(file)), 6);
 	c_fprintf(file, "\r\n");
-	EXPECT(c_ur(c_fprintv_cb, 0, 0, file), 6);
+	EXPECT(c_ur(PRINT_DST_FILE(file)), 6);
 	c_fprintf(file, "\r\n");
 
 	fclose(file);
@@ -301,13 +285,13 @@ static int t_file()
 
 	char buf[64] = { 0 };
 	int off	     = 0;
-	EXPECT(c_v(c_sprintv_cb, sizeof(buf), off, buf), 4);
+	EXPECT(c_v(PRINT_DST_BUF(buf, sizeof(buf), off)), 4);
 	off += 4;
 	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
-	EXPECT(c_vr(c_sprintv_cb, sizeof(buf), off, buf), 6);
+	EXPECT(c_vr(PRINT_DST_BUF(buf, sizeof(buf), off)), 6);
 	off += 6;
 	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
-	EXPECT(c_ur(c_sprintv_cb, sizeof(buf), off, buf), 6);
+	EXPECT(c_ur(PRINT_DST_BUF(buf, sizeof(buf), off)), 6);
 	off += 6;
 	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
 
@@ -325,11 +309,11 @@ static int t_wfile()
 
 	FILE *file = file_open(path, "wb+");
 
-	EXPECT(c_wv(c_fwprintv_cb, 0, 0, file), 2);
+	EXPECT(c_wv(PRINT_DST_WFILE(file)), 2);
 	c_fwprintf(file, L"\n");
-	EXPECT(c_wvr(c_fwprintv_cb, 0, 0, file), 2);
+	EXPECT(c_wvr(PRINT_DST_WFILE(file)), 2);
 	c_fwprintf(file, L"\n");
-	EXPECT(c_wur(c_fwprintv_cb, 0, 0, file), 2);
+	EXPECT(c_wur(PRINT_DST_WFILE(file)), 2);
 	c_fwprintf(file, L"\n");
 
 	fclose(file);
@@ -343,13 +327,13 @@ static int t_wfile()
 
 	wchar buf[64] = { 0 };
 	int off	      = 0;
-	EXPECT(c_wv(c_swprintv_cb, sizeof(buf), off, buf), 2);
+	EXPECT(c_wv(PRINT_DST_WBUF(buf, sizeof(buf), off)), 2);
 	off += 2;
 	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-	EXPECT(c_wvr(c_swprintv_cb, sizeof(buf), off, buf), 2);
+	EXPECT(c_wvr(PRINT_DST_WBUF(buf, sizeof(buf), off)), 2);
 	off += 2;
 	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-	EXPECT(c_wur(c_swprintv_cb, sizeof(buf), off, buf), 2);
+	EXPECT(c_wur(PRINT_DST_WBUF(buf, sizeof(buf), off)), 2);
 	off += 2;
 	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
 
@@ -365,7 +349,6 @@ int test_cplatform()
 	EXPECT(t_init_free(), 0);
 	EXPECT(t_time(), 0);
 	EXPECT(t_log(), 0);
-	EXPECT(t_log_callback(), 0);
 	EXPECT(t_print(), 0);
 	EXPECT(t_char(), 0);
 	EXPECT(t_file(), 0);

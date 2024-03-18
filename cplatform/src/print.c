@@ -281,102 +281,104 @@ int c_setmodew(FILE *file)
 #endif
 }
 
-int c_printv_cb(void *buf, size_t size, int off, const char *fmt, va_list args)
+int c_printv_cb(print_dst_t dst, const char *fmt, va_list args)
 {
-	(void)buf;
-	(void)size;
-	(void)off;
+	(void)dst;
 	return c_printv(fmt, args);
 }
 
-int c_sprintv_cb(void *buf, size_t size, int off, const char *fmt, va_list args)
+int c_sprintv_cb(print_dst_t dst, const char *fmt, va_list args)
 {
-	return c_sprintv(buf, size, off, fmt, args);
+	return c_sprintv(dst.out.buf, dst.size, dst.off, fmt, args);
 }
 
-int c_fprintv_cb(void *priv, size_t size, int off, const char *fmt, va_list args)
+int c_fprintv_cb(print_dst_t dst, const char *fmt, va_list args)
 {
-	(void)size;
-	(void)off;
-	return c_fprintv(priv, fmt, args);
+	int ret = c_fprintv(dst.out.file, fmt, args);
+	c_fflush(dst.out.file);
+	return ret;
 }
 
-int c_wprintv_cb(void *buf, size_t size, int off, const wchar *fmt, va_list args)
+int c_wprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args)
 {
-	(void)buf;
-	(void)size;
-	(void)off;
+	(void)dst;
 	return c_wprintv(fmt, args);
 }
 
-int c_swprintv_cb(void *buf, size_t size, int off, const wchar *fmt, va_list args)
+int c_swprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args)
 {
-	return c_swprintv(buf, size, off, fmt, args);
+	return c_swprintv(dst.out.buf, dst.size, dst.off, fmt, args);
 }
 
-int c_fwprintv_cb(void *priv, size_t size, int off, const wchar *fmt, va_list args)
+int c_fwprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args)
 {
-	(void)size;
-	(void)off;
-	return c_fwprintv(priv, fmt, args);
+	int ret = c_fwprintv(dst.out.file, fmt, args);
+	c_fflush(dst.out.file);
+	return ret;
 }
 
-int c_v(c_printv_fn cb, size_t size, int off, void *stream)
+int c_print_execv(print_dst_t dst, const char *fmt, va_list args)
 {
-	if (cb == NULL) {
+	if (dst.cb == NULL) {
 		return 0;
 	}
 
-	va_list empty = { 0 };
-	return cb(stream, size, off, "│ ", empty);
+	return dst.cb(dst, fmt, args);
 }
 
-int c_vr(c_printv_fn cb, size_t size, int off, void *stream)
+int c_print_exec(print_dst_t dst, const char *fmt, ...)
 {
-	if (cb == NULL) {
+	va_list args;
+	va_start(args, fmt);
+	int ret = c_print_execv(dst, fmt, args);
+	va_end(args);
+	return ret;
+}
+
+int c_wprint_execv(wprint_dst_t dst, const wchar *fmt, va_list args)
+{
+	if (dst.cb == NULL) {
 		return 0;
 	}
 
-	va_list empty = { 0 };
-	return cb(stream, size, off, "├─", empty);
+	return dst.cb(dst, fmt, args);
 }
 
-int c_ur(c_printv_fn cb, size_t size, int off, void *stream)
+int c_wprint_exec(wprint_dst_t dst, const wchar *fmt, ...)
 {
-	if (cb == NULL) {
-		return 0;
-	}
-
-	va_list empty = { 0 };
-	return cb(stream, size, off, "└─", empty);
+	va_list args;
+	va_start(args, fmt);
+	int ret = c_wprint_execv(dst, fmt, args);
+	va_end(args);
+	return ret;
 }
 
-int c_wv(c_wprintv_fn cb, size_t size, int off, void *stream)
+int c_v(print_dst_t dst)
 {
-	if (cb == NULL) {
-		return 0;
-	}
-
-	va_list empty = { 0 };
-	return cb(stream, size, off, L"\u2502 ", empty);
+	return c_print_exec(dst, "│ ");
 }
 
-int c_wvr(c_wprintv_fn cb, size_t size, int off, void *stream)
+int c_vr(print_dst_t dst)
 {
-	if (cb == NULL) {
-		return 0;
-	}
-
-	va_list empty = { 0 };
-	return cb(stream, size, off, L"\u251C\u2500", empty);
+	return c_print_exec(dst, "├─");
 }
 
-int c_wur(c_wprintv_fn cb, size_t size, int off, void *stream)
+int c_ur(print_dst_t dst)
 {
-	if (cb == NULL) {
-		return 0;
-	}
+	return c_print_exec(dst, "└─");
+}
 
-	va_list empty = { 0 };
-	return cb(stream, size, off, L"\u2514\u2500", empty);
+int c_wv(wprint_dst_t dst)
+{
+	return c_wprint_exec(dst, L"\u2502 ");
+}
+
+int c_wvr(wprint_dst_t dst)
+{
+	return c_wprint_exec(dst, L"\u251C\u2500");
+}
+
+int c_wur(wprint_dst_t dst)
+{
+	return c_wprint_exec(dst, L"\u2514\u2500");
 }

@@ -13,10 +13,7 @@ typedef struct log_event_s {
 	const char *fmt;
 	char time[C_TIME_BUF_SIZE];
 	int line;
-	c_printv_fn print;
-	size_t size;
-	int off;
-	void *priv;
+	print_dst_t print;
 	int level;
 	int header;
 } log_event_t;
@@ -25,10 +22,7 @@ typedef int (*log_cb)(log_event_t *ev);
 
 typedef struct log_callback_s {
 	log_cb log;
-	c_printv_fn print;
-	size_t size;
-	int off;
-	void *priv;
+	print_dst_t print;
 	int level;
 	int header;
 } log_callback_t;
@@ -60,8 +54,7 @@ const char *log_level_str(int level);
 int log_set_level(int level);
 int log_set_quiet(int enable);
 int log_set_header(int enable);
-int log_add_callback(log_cb cb, void *priv, int level, int header);
-int log_add_print(c_printv_fn cb, size_t size, int off, void *priv, int level, int header);
+int log_add_callback(log_cb log, print_dst_t print, int level, int header);
 
 int log_log(int level, const char *pkg, const char *file, const char *func, int line, const char *tag, const char *fmt, ...);
 
