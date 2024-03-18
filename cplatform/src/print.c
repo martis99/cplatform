@@ -113,7 +113,7 @@ int c_sprintv(char *buf, size_t size, int off, const char *fmt, va_list args)
 #else
 	ret = vsnprintf(buf, size / sizeof(char) - off, fmt, copy);
 	va_end(copy);
-	if (size > 0 && (size_t)ret > size) {
+	if (size > 0 && (size_t)ret > size - off) {
 		return 0;
 	}
 #endif
@@ -217,7 +217,7 @@ int c_swprintv(wchar *buf, size_t size, int off, const wchar *fmt, va_list args)
 	ret = vswprintf(buf, size / sizeof(wchar) - off, fmt, copy);
 	va_end(copy);
 
-	if (size > 0 && (size_t)ret > size) {
+	if (size > 0 && (size_t)ret > size - off) {
 		return 0;
 	}
 #endif
