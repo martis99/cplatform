@@ -15,7 +15,7 @@ static const char *level_strs[] = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "
 
 static const char *level_colors[] = { "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m" };
 
-static int stdout_callback(log_event_t *ev)
+int log_std_cb(log_event_t *ev)
 {
 	const char *tag_s = "";
 	const char *tag_e = "";
@@ -26,18 +26,23 @@ static int stdout_callback(log_event_t *ev)
 		tag   = ev->tag;
 	}
 
-	int len = 0;
+	int off = ev->print.off;
 
 	if (ev->header) {
-		len += c_print_exec(ev->print, "%s %s%-5s\x1b[0m [%s:%s] \x1b[90m%s:%d:\x1b[0m %s%s%s", ev->time, level_colors[ev->level], level_strs[ev->level], ev->pkg,
-				    ev->file, ev->func, ev->line, tag_s, tag, tag_e);
+		if (ev->colors) {
+			ev->print.off += c_print_exec(ev->print, "%s %s%-5s\x1b[0m [%s:%s] \x1b[90m%s:%d:\x1b[0m %s%s%s", ev->time, level_colors[ev->level],
+						      level_strs[ev->level], ev->pkg, ev->file, ev->func, ev->line, tag_s, tag, tag_e);
+		} else {
+			ev->print.off += c_print_exec(ev->print, "%s %-5s [%s:%s] %s:%d: %s%s%s", ev->time, level_strs[ev->level], ev->pkg, ev->file, ev->func, ev->line,
+						      tag_s, tag, tag_e);
+		}
 	} else {
-		len += c_print_exec(ev->print, "%s%s%s", tag_s, tag, tag_e);
+		ev->print.off += c_print_exec(ev->print, "%s%s%s", tag_s, tag, tag_e);
 	}
 
-	len += c_print_execv(ev->print, ev->fmt, ev->ap);
-	len += c_print_exec(ev->print, "\n");
-	return len;
+	ev->print.off += c_print_execv(ev->print, ev->fmt, ev->ap);
+	ev->print.off += c_print_exec(ev->print, "\n");
+	return ev->print.off - off;
 }
 
 log_t *log_init(log_t *log)
@@ -129,12 +134,13 @@ int log_add_callback(log_cb log, print_dst_t print, int level, int header)
 	return 1;
 }
 
-static int init_event(log_event_t *ev, print_dst_t print, int header)
+static int init_event(log_event_t *ev, print_dst_t print, int colors, int header)
 {
 	if (!ev->time[0]) {
 		c_time_str(ev->time);
 	}
 	ev->print  = print;
+	ev->colors = colors;
 	ev->header = header;
 	return 0;
 }
@@ -156,16 +162,16 @@ int log_log(int level, const char *pkg, const char *file, const char *func, int 
 	};
 
 	if (!s_log->quiet && level >= s_log->level) {
-		init_event(&ev, PRINT_DST_FILE(stderr), s_log->header);
+		init_event(&ev, PRINT_DST_FILE(stderr), 1, s_log->header);
 		va_start(ev.ap, fmt);
-		stdout_callback(&ev);
+		log_std_cb(&ev);
 		va_end(ev.ap);
 	}
 
 	for (int i = 0; i < LOG_MAX_CALLBACKS && s_log->callbacks[i].log; i++) {
 		log_callback_t *cb = &s_log->callbacks[i];
 		if (level >= cb->level) {
-			init_event(&ev, cb->print, cb->header);
+			init_event(&ev, cb->print, 0, cb->header);
 			va_start(ev.ap, fmt);
 			cb->print.off += cb->log(&ev);
 			va_end(ev.ap);

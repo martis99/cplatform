@@ -119,7 +119,9 @@ static int t_log()
 	log_t tmp = *log;
 	log_set(&tmp);
 
-	for (int i = 0; i < LOG_MAX_CALLBACKS; i++) {
+	EXPECT(log_add_callback(log_std_cb, PRINT_DST_NONE(), LOG_TRACE, 1), 0);
+
+	for (int i = 1; i < LOG_MAX_CALLBACKS; i++) {
 		EXPECT(log_add_callback(print_callback, PRINT_DST_NONE(), LOG_TRACE, 1), 0);
 	}
 

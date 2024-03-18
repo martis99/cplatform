@@ -14,6 +14,7 @@ typedef struct log_event_s {
 	char time[C_TIME_BUF_SIZE];
 	int line;
 	print_dst_t print;
+	int colors;
 	int level;
 	int header;
 } log_event_t;
@@ -49,6 +50,8 @@ enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 log_t *log_init(log_t *log);
 log_t *log_set(log_t *log);
 const log_t *log_get();
+
+int log_std_cb(log_event_t *ev);
 
 const char *log_level_str(int level);
 int log_set_level(int level);
