@@ -108,7 +108,11 @@ int c_sprintv(char *buf, size_t size, int off, const char *fmt, va_list args)
 	va_copy(copy, args);
 	int ret;
 #if defined(C_WIN)
-	ret = vsnprintf_s(buf, size / sizeof(char) - off, size / sizeof(char) - off, fmt, copy);
+	if (buf == NULL && size == 0) {
+		ret = vsnprintf(buf, size / sizeof(char) - off, fmt, copy);
+	} else {
+		ret = vsnprintf_s(buf, size / sizeof(char) - off, size / sizeof(char) - off, fmt, copy);
+	}
 	va_end(copy);
 #else
 	ret = vsnprintf(buf, size / sizeof(char) - off, fmt, copy);
