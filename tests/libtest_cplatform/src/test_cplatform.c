@@ -170,6 +170,7 @@ static int t_print()
 	file = file_open(temp, "r");
 
 	int level = log_set_level(LOG_FATAL);
+	EXPECT(c_fwprintf(file, L"Test"), 0);
 	EXPECT(c_fprintf(file, "Test"), 0);
 	log_set_level(level);
 
@@ -239,7 +240,7 @@ static int t_char()
 	EXPECT(c_wv(PRINT_DST_WFILE(stdout)), 2);
 	EXPECT(c_wvr(PRINT_DST_WFILE(stdout)), 2);
 	EXPECT(c_wur(PRINT_DST_WFILE(stdout)), 2);
-	c_printf("\n");
+	c_fprintf(stdout, "\n");
 
 	line(rh, rc);
 	c_fflush(stdout);

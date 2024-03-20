@@ -78,10 +78,15 @@ int c_fprintv(FILE *file, const char *fmt, va_list args)
 #else
 	ret = vfprintf(file, fmt, copy);
 #endif
-	int errnum = errno;
-	if (ret < 0 && errnum != 0) {
-		log_error("cplatform", "print", NULL, "failed to write to file: %s (%d)", log_strerror(errnum), errnum);
-		ret = 0;
+	if (ret < 0) {
+		int errnum = errno;
+		if (errnum == 0 && (file == stdout || file == stderr)) {
+			file_reopen(NULL, "w", file);
+			ret = vfprintf(file, fmt, copy);
+		} else {
+			log_error("cplatform", "print", NULL, "failed to write to file: %s (%d)", log_strerror(errnum), errnum);
+			ret = 0;
+		}
 	}
 	va_end(copy);
 	return ret;
@@ -183,9 +188,15 @@ int c_fwprintv(FILE *file, const wchar *fmt, va_list args)
 #else
 	ret = vfwprintf(file, fmt, copy);
 #endif
-	if (ret < 0 && errno == 0) {
-		file_reopen(NULL, "w", file);
-		ret = vfwprintf(file, fmt, copy);
+	if (ret < 0) {
+		int errnum = errno;
+		if (errnum == 0 && (file == stdout || file == stderr)) {
+			file_reopen(NULL, "w", file);
+			ret = vfwprintf(file, fmt, copy);
+		} else {
+			log_error("cplatform", "print", NULL, "failed to write to file: %s (%d)", log_strerror(errnum), errnum);
+			ret = 0;
+		}
 	}
 	va_end(copy);
 	return ret;
