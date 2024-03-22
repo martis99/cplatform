@@ -66,23 +66,6 @@ static int file_delete(const char *path)
 	return ret;
 }
 
-static void line(int rh, int rc)
-{
-	for (int i = 0; i < rh + 1; i++) {
-		c_printf("-");
-	}
-
-	for (int j = 0; j < 2; j++) {
-		c_printf("+");
-
-		for (int i = 0; i < rc + 2; i++) {
-			c_printf("-");
-		}
-	}
-
-	c_printf("\n");
-}
-
 static int t_init_free()
 {
 	int ret = 0;
@@ -178,25 +161,23 @@ static int t_print()
 	file_delete(temp);
 
 	EXPECT(c_sprintv(NULL, 0, 0, NULL, NULL), 0);
+	EXPECT(dprintf(PRINT_DST_NONE(), NULL), 0);
 #ifdef C_LINUX
 	char cbuf[2] = { 0 };
-	EXPECT(c_sprintf(cbuf, sizeof(cbuf), 0, "abc"), 0);
+	EXPECT(dprintf(PRINT_DST_BUF(cbuf, sizeof(cbuf), 0), "abc"), 0);
 #endif
+
 	EXPECT(c_wprintv(NULL, NULL), 0);
 	EXPECT(c_fwprintv(NULL, NULL, NULL), 0);
 	EXPECT(c_swprintv(NULL, 0, 0, NULL, NULL), 0);
+	EXPECT(dwprintf(PRINT_DST_WNONE(), NULL), 0);
 #ifdef C_LINUX
 	wchar wbuf[2] = { 0 };
-	EXPECT(c_swprintf(wbuf, sizeof(wbuf), 0, L"abc"), 0);
+	EXPECT(dwprintf(PRINT_DST_WBUF(wbuf, sizeof(wbuf), 0), L"abc"), 0);
 #endif
+
 	EXPECT(c_setmode(NULL, 0), 0);
 	EXPECT(c_fflush(NULL), 1);
-	EXPECT(c_v(PRINT_DST_NONE()), 0);
-	EXPECT(c_vr(PRINT_DST_NONE()), 0);
-	EXPECT(c_ur(PRINT_DST_NONE()), 0);
-	EXPECT(c_wv(PRINT_DST_WNONE()), 0);
-	EXPECT(c_wvr(PRINT_DST_WNONE()), 0);
-	EXPECT(c_wur(PRINT_DST_WNONE()), 0);
 
 	return ret;
 }
@@ -205,57 +186,23 @@ static int t_char()
 {
 	int ret = 0;
 
-	c_fflush(stdout);
-	c_fflush(stderr);
+	EXPECT(dprintf(PRINT_DST_STD(), "┌─┬─┐"), 5 * 3);
+	EXPECT(dwprintf(PRINT_DST_WSTD(), L"\u250C\u2500\u252C\u2500\u2510"), 5);
+	EXPECT(dprintf(PRINT_DST_FILE(stdout), "┌─┬─┐"), 5 * 3);
+	EXPECT(dwprintf(PRINT_DST_WFILE(stdout), L"\u250C\u2500\u252C\u2500\u2510"), 5);
 	c_printf("\n");
-	c_fflush(stdout);
-	c_fflush(stderr);
 
-	const int rh  = 6;
-	const int rc  = 6;
-	const int hrc = (rc - 6) / 2;
+	EXPECT(dprintf(PRINT_DST_STD(), "├─┼─┤"), 5 * 3);
+	EXPECT(dwprintf(PRINT_DST_WSTD(), L"\u251C\u2500\u253C\u2500\u2524"), 5);
+	EXPECT(dprintf(PRINT_DST_FILE(stdout), "├─┼─┤"), 5 * 3);
+	EXPECT(dwprintf(PRINT_DST_WFILE(stdout), L"\u251C\u2500\u253C\u2500\u2524"), 5);
+	c_printf("\n");
 
-	c_printf("%*s | %-*s | %-*s\n", rh, "", rc, "char", rc, "wchar");
-
-	line(rh, rc);
-
-	c_printf("%*s | %*s", rh, "print", hrc, "");
-	EXPECT(c_v(PRINT_DST_STD()), 4);
-	EXPECT(c_vr(PRINT_DST_STD()), 6);
-	EXPECT(c_ur(PRINT_DST_STD()), 6);
-	c_printf("%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wv(PRINT_DST_WSTD()), 2);
-	EXPECT(c_wvr(PRINT_DST_WSTD()), 2);
-	EXPECT(c_wur(PRINT_DST_WSTD()), 2);
+	EXPECT(dprintf(PRINT_DST_STD(), "└─┴─┘"), 5 * 3);
+	EXPECT(dwprintf(PRINT_DST_WSTD(), L"\u2514\u2500\u2534\u2500\u2518"), 5);
+	EXPECT(dprintf(PRINT_DST_FILE(stdout), "└─┴─┘"), 5 * 3);
+	EXPECT(dwprintf(PRINT_DST_WFILE(stdout), L"\u2514\u2500\u2534\u2500\u2518"), 5);
 	c_wprintf(L"\n");
-	c_fflush(stdout);
-
-	line(rh, rc);
-
-	c_printf("%*s | %*s", rh, "stdout", hrc, "");
-	EXPECT(c_v(PRINT_DST_FILE(stdout)), 4);
-	EXPECT(c_vr(PRINT_DST_FILE(stdout)), 6);
-	EXPECT(c_ur(PRINT_DST_FILE(stdout)), 6);
-	c_printf("%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wv(PRINT_DST_WFILE(stdout)), 2);
-	EXPECT(c_wvr(PRINT_DST_WFILE(stdout)), 2);
-	EXPECT(c_wur(PRINT_DST_WFILE(stdout)), 2);
-	c_fprintf(stdout, "\n");
-
-	line(rh, rc);
-	c_fflush(stdout);
-
-	c_fprintf(stderr, "%*s | %*s", rh, "stderr", hrc, "");
-	EXPECT(c_v(PRINT_DST_FILE(stderr)), 4);
-	EXPECT(c_vr(PRINT_DST_FILE(stderr)), 6);
-	EXPECT(c_ur(PRINT_DST_FILE(stderr)), 6);
-	c_fprintf(stderr, "%*s | %*s", hrc, "", hrc, "");
-	EXPECT(c_wv(PRINT_DST_WFILE(stderr)), 2);
-	EXPECT(c_wvr(PRINT_DST_WFILE(stderr)), 2);
-	EXPECT(c_wur(PRINT_DST_WFILE(stderr)), 2);
-	c_fflush(stderr);
-	c_fprintf(stdout, "\n\n");
-	c_fflush(stdout);
 
 	return ret;
 }
@@ -264,41 +211,25 @@ static int t_file()
 {
 	int ret = 0;
 
-	const char exp[] = "│ \r\n├─\r\n└─\r\n";
-
+	const char exp[] = "┼\r\n";
 	const char *path = "char.txt";
 
 	FILE *file = file_open(path, "wb+");
-
-	EXPECT(c_v(PRINT_DST_FILE(file)), 4);
-	c_fprintf(file, "\r\n");
-	EXPECT(c_vr(PRINT_DST_FILE(file)), 6);
-	c_fprintf(file, "\r\n");
-	EXPECT(c_ur(PRINT_DST_FILE(file)), 6);
-	c_fprintf(file, "\r\n");
-
+	c_fprintf(file, "┼\r\n");
 	fclose(file);
-	file	      = file_open(path, "rb+");
+
+	file = file_open(path, "rb+");
+
 	char data[64] = { 0 };
 	EXPECT(file_read(file, sizeof(exp) - 1, data, sizeof(data)), sizeof(exp) - 1);
 	fclose(file);
 	file_delete(path);
-
 	EXPECT_STR(data, exp);
 
 	char buf[64] = { 0 };
-	int off	     = 0;
-	EXPECT(c_v(PRINT_DST_BUF(buf, sizeof(buf), off)), 4);
-	off += 4;
-	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
-	EXPECT(c_vr(PRINT_DST_BUF(buf, sizeof(buf), off)), 6);
-	off += 6;
-	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
-	EXPECT(c_ur(PRINT_DST_BUF(buf, sizeof(buf), off)), 6);
-	off += 6;
-	off += c_sprintf(buf, sizeof(buf), off, "\r\n");
-
+	EXPECT(c_sprintf(buf, sizeof(buf), 0, "┼\r\n"), 5);
 	EXPECT_STR(buf, exp);
+
 	return ret;
 }
 
@@ -306,40 +237,23 @@ static int t_wfile()
 {
 	int ret = 0;
 
-	const wchar exp[] = L"\u2502 \r\n\u251C\u2500\r\n\u2514\u2500\r\n";
-
-	const char *path = "wchar.txt";
+	const wchar exp[] = L"\u253C\r\n";
+	const char *path  = "wchar.txt";
 
 	FILE *file = file_open(path, "wb+");
-
-	EXPECT(c_wv(PRINT_DST_WFILE(file)), 2);
-	c_fwprintf(file, L"\n");
-	EXPECT(c_wvr(PRINT_DST_WFILE(file)), 2);
-	c_fwprintf(file, L"\n");
-	EXPECT(c_wur(PRINT_DST_WFILE(file)), 2);
-	c_fwprintf(file, L"\n");
-
+	c_fwprintf(file, L"\u253C\n");
 	fclose(file);
 
-	file	       = file_open(path, "rb+");
+	file = file_open(path, "rb+");
+
 	wchar data[64] = { 0 };
-	file_read(file, sizeof(exp) - 1, data, sizeof(data));
-	//EXPECT_WSTR(data, exp); //TODO: read wchar from file
+	EXPECT(file_read(file, sizeof(exp) - 1, data, sizeof(data)), 0);
 	fclose(file);
 	file_delete(path);
+	//EXPECT_WSTR(data, exp); //TODO: read wchar from file
 
 	wchar buf[64] = { 0 };
-	int off	      = 0;
-	EXPECT(c_wv(PRINT_DST_WBUF(buf, sizeof(buf), off)), 2);
-	off += 2;
-	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-	EXPECT(c_wvr(PRINT_DST_WBUF(buf, sizeof(buf), off)), 2);
-	off += 2;
-	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-	EXPECT(c_wur(PRINT_DST_WBUF(buf, sizeof(buf), off)), 2);
-	off += 2;
-	off += c_swprintf(buf, sizeof(buf), off, L"\r\n");
-
+	EXPECT(c_swprintf(buf, sizeof(buf), 0, L"\u253C\r\n"), 3);
 	EXPECT_WSTR(buf, exp);
 
 	return ret;

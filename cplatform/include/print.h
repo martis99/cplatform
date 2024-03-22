@@ -65,19 +65,11 @@ int c_wprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
 int c_swprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
 int c_fwprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
 
-int c_print_execv(print_dst_t dst, const char *fmt, va_list args);
-int c_print_exec(print_dst_t dst, const char *fmt, ...);
+int dprintv(print_dst_t dst, const char *fmt, va_list args);
+int dprintf(print_dst_t dst, const char *fmt, ...);
 
-int c_wprint_execv(wprint_dst_t dst, const wchar *fmt, va_list args);
-int c_wprint_exec(wprint_dst_t dst, const wchar *fmt, ...);
-
-int c_v(print_dst_t dst);
-int c_vr(print_dst_t dst);
-int c_ur(print_dst_t dst);
-
-int c_wv(wprint_dst_t dst);
-int c_wvr(wprint_dst_t dst);
-int c_wur(wprint_dst_t dst);
+int dwprintv(wprint_dst_t dst, const wchar *fmt, va_list args);
+int dwprintf(wprint_dst_t dst, const wchar *fmt, ...);
 
 // clang-format off
 #define PRINT_DST_NONE() (print_dst_t) { 0 }

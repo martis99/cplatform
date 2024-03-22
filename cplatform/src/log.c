@@ -30,18 +30,18 @@ int log_std_cb(log_event_t *ev)
 
 	if (ev->header) {
 		if (ev->colors) {
-			ev->print.off += c_print_exec(ev->print, "%s %s%-5s\x1b[0m [%s:%s] \x1b[90m%s:%d:\x1b[0m %s%s%s", ev->time, level_colors[ev->level],
-						      level_strs[ev->level], ev->pkg, ev->file, ev->func, ev->line, tag_s, tag, tag_e);
+			ev->print.off += dprintf(ev->print, "%s %s%-5s\x1b[0m [%s:%s] \x1b[90m%s:%d:\x1b[0m %s%s%s", ev->time, level_colors[ev->level],
+						 level_strs[ev->level], ev->pkg, ev->file, ev->func, ev->line, tag_s, tag, tag_e);
 		} else {
-			ev->print.off += c_print_exec(ev->print, "%s %-5s [%s:%s] %s:%d: %s%s%s", ev->time, level_strs[ev->level], ev->pkg, ev->file, ev->func, ev->line,
-						      tag_s, tag, tag_e);
+			ev->print.off += dprintf(ev->print, "%s %-5s [%s:%s] %s:%d: %s%s%s", ev->time, level_strs[ev->level], ev->pkg, ev->file, ev->func, ev->line,
+						 tag_s, tag, tag_e);
 		}
 	} else {
-		ev->print.off += c_print_exec(ev->print, "%s%s%s", tag_s, tag, tag_e);
+		ev->print.off += dprintf(ev->print, "%s%s%s", tag_s, tag, tag_e);
 	}
 
-	ev->print.off += c_print_execv(ev->print, ev->fmt, ev->ap);
-	ev->print.off += c_print_exec(ev->print, "\n");
+	ev->print.off += dprintv(ev->print, ev->fmt, ev->ap);
+	ev->print.off += dprintf(ev->print, "\n");
 	return ev->print.off - off;
 }
 

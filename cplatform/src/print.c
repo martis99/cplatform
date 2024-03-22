@@ -328,7 +328,7 @@ int c_fwprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args)
 	return ret;
 }
 
-int c_print_execv(print_dst_t dst, const char *fmt, va_list args)
+int dprintv(print_dst_t dst, const char *fmt, va_list args)
 {
 	if (dst.cb == NULL) {
 		return 0;
@@ -337,16 +337,16 @@ int c_print_execv(print_dst_t dst, const char *fmt, va_list args)
 	return dst.cb(dst, fmt, args);
 }
 
-int c_print_exec(print_dst_t dst, const char *fmt, ...)
+int dprintf(print_dst_t dst, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	int ret = c_print_execv(dst, fmt, args);
+	int ret = dprintv(dst, fmt, args);
 	va_end(args);
 	return ret;
 }
 
-int c_wprint_execv(wprint_dst_t dst, const wchar *fmt, va_list args)
+int dwprintv(wprint_dst_t dst, const wchar *fmt, va_list args)
 {
 	if (dst.cb == NULL) {
 		return 0;
@@ -355,41 +355,11 @@ int c_wprint_execv(wprint_dst_t dst, const wchar *fmt, va_list args)
 	return dst.cb(dst, fmt, args);
 }
 
-int c_wprint_exec(wprint_dst_t dst, const wchar *fmt, ...)
+int dwprintf(wprint_dst_t dst, const wchar *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	int ret = c_wprint_execv(dst, fmt, args);
+	int ret = dwprintv(dst, fmt, args);
 	va_end(args);
 	return ret;
-}
-
-int c_v(print_dst_t dst)
-{
-	return c_print_exec(dst, "│ ");
-}
-
-int c_vr(print_dst_t dst)
-{
-	return c_print_exec(dst, "├─");
-}
-
-int c_ur(print_dst_t dst)
-{
-	return c_print_exec(dst, "└─");
-}
-
-int c_wv(wprint_dst_t dst)
-{
-	return c_wprint_exec(dst, L"\u2502 ");
-}
-
-int c_wvr(wprint_dst_t dst)
-{
-	return c_wprint_exec(dst, L"\u251C\u2500");
-}
-
-int c_wur(wprint_dst_t dst)
-{
-	return c_wprint_exec(dst, L"\u2514\u2500");
 }
