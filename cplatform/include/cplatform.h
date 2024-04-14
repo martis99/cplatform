@@ -7,7 +7,7 @@ typedef struct cplatform_s {
 	log_t log;
 } cplatform_t;
 
-cplatform_t *cplatform_init(cplatform_t *cplatform);
-int cplatform_free(cplatform_t *cplatform);
+PLTAPI cplatform_t *cplatform_init(cplatform_t *cplatform);
+PLTAPI int cplatform_free(cplatform_t *cplatform);
 
 #endif

@@ -47,20 +47,20 @@ enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 #define log_error(_pkg, _file, _tag, ...) log_log(LOG_ERROR, _pkg, _file, __func__, __LINE__, _tag, __VA_ARGS__)
 #define log_fatal(_pkg, _file, _tag, ...) log_log(LOG_FATAL, _pkg, _file, __func__, __LINE__, _tag, __VA_ARGS__)
 
-log_t *log_init(log_t *log);
-log_t *log_set(log_t *log);
-const log_t *log_get();
+PLTAPI log_t *log_init(log_t *log);
+PLTAPI log_t *log_set(log_t *log);
+PLTAPI const log_t *log_get();
 
-int log_std_cb(log_event_t *ev);
+PLTAPI int log_std_cb(log_event_t *ev);
 
-const char *log_level_str(int level);
-int log_set_level(int level);
-int log_set_quiet(int enable);
-int log_set_header(int enable);
-int log_add_callback(log_cb log, print_dst_t print, int level, int header);
+PLTAPI const char *log_level_str(int level);
+PLTAPI int log_set_level(int level);
+PLTAPI int log_set_quiet(int enable);
+PLTAPI int log_set_header(int enable);
+PLTAPI int log_add_callback(log_cb log, print_dst_t print, int level, int header);
 
-int log_log(int level, const char *pkg, const char *file, const char *func, int line, const char *tag, const char *fmt, ...);
+PLTAPI int log_log(int level, const char *pkg, const char *file, const char *func, int line, const char *tag, const char *fmt, ...);
 
-const char *log_strerror(int errnum);
+PLTAPI const char *log_strerror(int errnum);
 
 #endif

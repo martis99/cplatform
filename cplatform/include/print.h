@@ -1,35 +1,36 @@
 #ifndef PRINT_H
 #define PRINT_H
 
+#include "pdef.h"
 #include "type.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 
-int c_print_init();
+PLTAPI int c_print_init();
 
-int c_printv(const char *fmt, va_list args);
-int c_printf(const char *fmt, ...);
+PLTAPI int c_printv(const char *fmt, va_list args);
+PLTAPI int c_printf(const char *fmt, ...);
 
-int c_fprintv(FILE *file, const char *fmt, va_list args);
-int c_fprintf(FILE *file, const char *fmt, ...);
+PLTAPI int c_fprintv(FILE *file, const char *fmt, va_list args);
+PLTAPI int c_fprintf(FILE *file, const char *fmt, ...);
 
-int c_sprintv(char *buf, size_t size, int off, const char *fmt, va_list args);
-int c_sprintf(char *buf, size_t size, int off, const char *fmt, ...);
+PLTAPI int c_sprintv(char *buf, size_t size, int off, const char *fmt, va_list args);
+PLTAPI int c_sprintf(char *buf, size_t size, int off, const char *fmt, ...);
 
-int c_wprintv(const wchar *fmt, va_list args);
-int c_wprintf(const wchar *fmt, ...);
+PLTAPI int c_wprintv(const wchar *fmt, va_list args);
+PLTAPI int c_wprintf(const wchar *fmt, ...);
 
-int c_fwprintv(FILE *file, const wchar *fmt, va_list args);
-int c_fwprintf(FILE *file, const wchar *fmt, ...);
+PLTAPI int c_fwprintv(FILE *file, const wchar *fmt, va_list args);
+PLTAPI int c_fwprintf(FILE *file, const wchar *fmt, ...);
 
-int c_swprintv(wchar *buf, size_t size, int off, const wchar *fmt, va_list args);
-int c_swprintf(wchar *buf, size_t size, int off, const wchar *fmt, ...);
+PLTAPI int c_swprintv(wchar *buf, size_t size, int off, const wchar *fmt, va_list args);
+PLTAPI int c_swprintf(wchar *buf, size_t size, int off, const wchar *fmt, ...);
 
-int c_fflush(FILE *file);
+PLTAPI int c_fflush(FILE *file);
 
-int c_setmode(FILE *file, int mode);
-int c_setmodew(FILE *file);
+PLTAPI int c_setmode(FILE *file, int mode);
+PLTAPI int c_setmodew(FILE *file);
 
 typedef struct print_dst_s print_dst_t;
 typedef int (*c_printv_fn)(print_dst_t dst, const char *fmt, va_list args);
@@ -44,9 +45,9 @@ struct print_dst_s {
 	void *priv;
 };
 
-int c_printv_cb(print_dst_t dst, const char *fmt, va_list args);
-int c_sprintv_cb(print_dst_t dst, const char *fmt, va_list args);
-int c_fprintv_cb(print_dst_t dst, const char *fmt, va_list args);
+PLTAPI int c_printv_cb(print_dst_t dst, const char *fmt, va_list args);
+PLTAPI int c_sprintv_cb(print_dst_t dst, const char *fmt, va_list args);
+PLTAPI int c_fprintv_cb(print_dst_t dst, const char *fmt, va_list args);
 
 typedef struct wprint_dst_s wprint_dst_t;
 typedef int (*c_wprintv_fn)(wprint_dst_t dst, const wchar *fmt, va_list args);
@@ -61,15 +62,15 @@ struct wprint_dst_s {
 	void *priv;
 };
 
-int c_wprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
-int c_swprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
-int c_fwprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
+PLTAPI int c_wprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
+PLTAPI int c_swprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
+PLTAPI int c_fwprintv_cb(wprint_dst_t dst, const wchar *fmt, va_list args);
 
-int dprintv(print_dst_t dst, const char *fmt, va_list args);
-int dprintf(print_dst_t dst, const char *fmt, ...);
+PLTAPI int dprintv(print_dst_t dst, const char *fmt, va_list args);
+PLTAPI int dprintf(print_dst_t dst, const char *fmt, ...);
 
-int dwprintv(wprint_dst_t dst, const wchar *fmt, va_list args);
-int dwprintf(wprint_dst_t dst, const wchar *fmt, ...);
+PLTAPI int dwprintv(wprint_dst_t dst, const wchar *fmt, va_list args);
+PLTAPI int dwprintf(wprint_dst_t dst, const wchar *fmt, ...);
 
 // clang-format off
 #define PRINT_DST_NONE() (print_dst_t) { 0 }
