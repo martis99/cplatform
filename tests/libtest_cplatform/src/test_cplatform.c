@@ -266,7 +266,7 @@ static int t_mem()
 
 	int level = log_set_level(LOG_FATAL);
 
-	char buf[64] = { 0 };
+	char buf[256] = { 0 };
 
 	mem_t *mem = (mem_t *)mem_get();
 
