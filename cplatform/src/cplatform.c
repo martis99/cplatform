@@ -7,6 +7,7 @@ cplatform_t *cplatform_init(cplatform_t *cplatform)
 	}
 
 	log_init(&cplatform->log);
+	mem_init(&cplatform->mem);
 
 	c_print_init();
 
