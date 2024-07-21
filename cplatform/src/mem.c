@@ -30,12 +30,12 @@ const mem_t *mem_get()
 
 static void get_max_unit(size_t *size, char *u)
 {
-	if (*size > 1024) {
+	if (*size >= 1024) {
 		*size /= 1024;
 		*u = 'K';
 	}
 
-	if (*size > 1024) {
+	if (*size >= 1024) {
 		*size /= 1024;
 		*u = 'M';
 	}

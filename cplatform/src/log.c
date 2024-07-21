@@ -13,7 +13,7 @@ static log_t *s_log;
 
 static const char *level_strs[] = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
 
-static const char *level_colors[] = { "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m" };
+static const char *level_colors[] = { "\033[94m", "\033[36m", "\033[32m", "\033[33m", "\033[31m", "\033[35m" };
 
 int log_std_cb(log_event_t *ev)
 {
@@ -30,7 +30,7 @@ int log_std_cb(log_event_t *ev)
 
 	if (ev->header) {
 		if (ev->colors) {
-			ev->print.off += dprintf(ev->print, "%s %s%-5s\x1b[0m [%s:%s] \x1b[90m%s:%d:\x1b[0m %s%s%s", ev->time, level_colors[ev->level],
+			ev->print.off += dprintf(ev->print, "%s %s%-5s\033[0m [%s:%s] \033[90m%s:%d:\033[0m %s%s%s", ev->time, level_colors[ev->level],
 						 level_strs[ev->level], ev->pkg, ev->file, ev->func, ev->line, tag_s, tag, tag_e);
 		} else {
 			ev->print.off += dprintf(ev->print, "%s %-5s [%s:%s] %s:%d: %s%s%s", ev->time, level_strs[ev->level], ev->pkg, ev->file, ev->func, ev->line,
